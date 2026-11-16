@@ -1,0 +1,4056 @@
+[
+  {
+    "name": "admin_accounts",
+    "create_sql": "\nCREATE TABLE admin_accounts (\n\taccount_id INTEGER NOT NULL, \n\tusername VARCHAR(32) NOT NULL, \n\tdisplay_name VARCHAR(64) NOT NULL, \n\tpassword_hash TEXT NOT NULL, \n\tPRIMARY KEY (account_id), \n\tCONSTRAINT admin_account_singleton CHECK (account_id = 1), \n\tCONSTRAINT admin_username_format CHECK (username ~ '^[A-Za-z0-9_]{3,32}$'), \n\tCONSTRAINT admin_display_name_nonempty CHECK (length(btrim(display_name)) > 0), \n\tUNIQUE (username)\n)\n\n",
+    "columns": [
+      {
+        "name": "account_id",
+        "sql": "account_id INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "username",
+        "sql": "username VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "display_name",
+        "sql": "display_name VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "password_hash",
+        "sql": "password_hash TEXT NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "admin_audit",
+    "create_sql": "\nCREATE TABLE admin_audit (\n\tid SERIAL NOT NULL, \n\tactor VARCHAR(32) NOT NULL, \n\taction VARCHAR(64) NOT NULL, \n\tpath VARCHAR(2048) NOT NULL, \n\tmethod VARCHAR(16) NOT NULL, \n\tat TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "action",
+        "sql": "action VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "path",
+        "sql": "path VARCHAR(2048) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "method",
+        "sql": "method VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "at",
+        "sql": "at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "audio_recordings",
+    "create_sql": "\nCREATE TABLE audio_recordings (\n\trecording_id VARCHAR(36) NOT NULL, \n\ttitle VARCHAR(128) NOT NULL, \n\tsource_id VARCHAR(64) NOT NULL, \n\tsource_type VARCHAR(16) NOT NULL, \n\tsource_key VARCHAR(160), \n\tstatus VARCHAR(16) NOT NULL, \n\tduration_ms INTEGER NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tprocessed_at TIMESTAMP WITH TIME ZONE, \n\tclaim_at TIMESTAMP WITH TIME ZONE, \n\tclaim_id VARCHAR(36), \n\tmodel VARCHAR(160), \n\tspeaker_model VARCHAR(160), \n\tspeaker_count INTEGER, \n\tsegment_count INTEGER NOT NULL, \n\tsha256 VARCHAR(64) NOT NULL, \n\toriginal_path VARCHAR(80) NOT NULL, \n\tpcm_path VARCHAR(80), \n\terror TEXT, \n\tPRIMARY KEY (recording_id), \n\tCONSTRAINT audio_recording_status CHECK (status IN ('queued','processing','ready','failed')), \n\tCONSTRAINT audio_recording_source_type CHECK (source_type IN ('file','upload')), \n\tUNIQUE (source_key)\n)\n\n",
+    "columns": [
+      {
+        "name": "recording_id",
+        "sql": "recording_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "title",
+        "sql": "title VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_type",
+        "sql": "source_type VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_key",
+        "sql": "source_key VARCHAR(160)",
+        "safe_add": true
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "duration_ms",
+        "sql": "duration_ms INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "processed_at",
+        "sql": "processed_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "claim_at",
+        "sql": "claim_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "claim_id",
+        "sql": "claim_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "model",
+        "sql": "model VARCHAR(160)",
+        "safe_add": true
+      },
+      {
+        "name": "speaker_model",
+        "sql": "speaker_model VARCHAR(160)",
+        "safe_add": true
+      },
+      {
+        "name": "speaker_count",
+        "sql": "speaker_count INTEGER",
+        "safe_add": true
+      },
+      {
+        "name": "segment_count",
+        "sql": "segment_count INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "sha256",
+        "sql": "sha256 VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "original_path",
+        "sql": "original_path VARCHAR(80) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "pcm_path",
+        "sql": "pcm_path VARCHAR(80)",
+        "safe_add": true
+      },
+      {
+        "name": "error",
+        "sql": "error TEXT",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_audio_recordings_status",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_audio_recordings_status ON audio_recordings (status)"
+      }
+    ]
+  },
+  {
+    "name": "business_persons",
+    "create_sql": "\nCREATE TABLE business_persons (\n\tperson_id VARCHAR(36) NOT NULL, \n\tcode VARCHAR(64) NOT NULL, \n\tname VARCHAR(128) NOT NULL, \n\tunit VARCHAR(128) NOT NULL, \n\trole VARCHAR(16) NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\tPRIMARY KEY (person_id), \n\tCONSTRAINT business_person_role CHECK (role IN ('expert', 'supervisor', 'staff', 'owner', 'agent', 'bidder')), \n\tCONSTRAINT business_person_text CHECK (length(btrim(code)) > 0 AND length(btrim(name)) > 0 AND length(btrim(unit)) > 0), \n\tUNIQUE (code)\n)\n\n",
+    "columns": [
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "code",
+        "sql": "code VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "name",
+        "sql": "name VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "unit",
+        "sql": "unit VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "role",
+        "sql": "role VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "enabled",
+        "sql": "enabled BOOLEAN NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "business_projects",
+    "create_sql": "\nCREATE TABLE business_projects (\n\tproject_id VARCHAR(36) NOT NULL, \n\tcode VARCHAR(64) NOT NULL, \n\tname VARCHAR(128) NOT NULL, \n\towner VARCHAR(128) NOT NULL, \n\tstart_at TIMESTAMP WITH TIME ZONE, \n\tend_at TIMESTAMP WITH TIME ZONE, \n\tstatus VARCHAR(16) NOT NULL, \n\tPRIMARY KEY (project_id), \n\tCONSTRAINT business_project_status CHECK (status IN ('draft', 'running', 'closed')), \n\tCONSTRAINT business_project_dates CHECK (start_at IS NULL OR end_at IS NULL OR start_at <= end_at), \n\tCONSTRAINT business_project_text CHECK (length(btrim(code)) > 0 AND length(btrim(name)) > 0 AND length(btrim(owner)) > 0), \n\tUNIQUE (code)\n)\n\n",
+    "columns": [
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "code",
+        "sql": "code VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "name",
+        "sql": "name VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "owner",
+        "sql": "owner VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "start_at",
+        "sql": "start_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "end_at",
+        "sql": "end_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "business_registry_bootstrap",
+    "create_sql": "\nCREATE TABLE business_registry_bootstrap (\n\tkey VARCHAR(64) NOT NULL, \n\tPRIMARY KEY (key)\n)\n\n",
+    "columns": [
+      {
+        "name": "key",
+        "sql": "key VARCHAR(64) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "clue_processing",
+    "create_sql": "\nCREATE TABLE clue_processing (\n\tid SERIAL NOT NULL, \n\tobservation_id VARCHAR(256) NOT NULL, \n\tsession_id VARCHAR(256), \n\tsource_id VARCHAR(256) NOT NULL, \n\tscene_id VARCHAR(8), \n\trule_id VARCHAR(256), \n\tstatus VARCHAR(16) NOT NULL, \n\terror_code VARCHAR(64) NOT NULL, \n\terror_message VARCHAR(512) NOT NULL, \n\toccurred_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT clue_processing_failed_only CHECK (status = 'failed')\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "observation_id",
+        "sql": "observation_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "scene_id",
+        "sql": "scene_id VARCHAR(8)",
+        "safe_add": true
+      },
+      {
+        "name": "rule_id",
+        "sql": "rule_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "error_code",
+        "sql": "error_code VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "error_message",
+        "sql": "error_message VARCHAR(512) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "occurred_at",
+        "sql": "occurred_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_clue_processing_observation_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_clue_processing_observation_id ON clue_processing (observation_id)"
+      }
+    ]
+  },
+  {
+    "name": "decisions",
+    "create_sql": "\nCREATE TABLE decisions (\n\tid SERIAL NOT NULL, \n\tevent_id VARCHAR(36), \n\taction VARCHAR(32), \n\treviewer_id VARCHAR(64), \n\tnote TEXT, \n\tdecided_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "action",
+        "sql": "action VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "reviewer_id",
+        "sql": "reviewer_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "note",
+        "sql": "note TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "decided_at",
+        "sql": "decided_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_decisions_event_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_decisions_event_id ON decisions (event_id)"
+      }
+    ]
+  },
+  {
+    "name": "demo_event_meta",
+    "create_sql": "\nCREATE TABLE demo_event_meta (\n\tevent_id VARCHAR(36) NOT NULL, \n\troom VARCHAR(128) NOT NULL, \n\tnote TEXT, \n\trequest_id VARCHAR(64) NOT NULL, \n\tPRIMARY KEY (event_id), \n\tUNIQUE (request_id)\n)\n\n",
+    "columns": [
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room",
+        "sql": "room VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "note",
+        "sql": "note TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "request_id",
+        "sql": "request_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "demo_reminder_assets",
+    "create_sql": "\nCREATE TABLE demo_reminder_assets (\n\tid SERIAL NOT NULL, \n\turl VARCHAR(256), \n\tversion VARCHAR(64), \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "url",
+        "sql": "url VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "version",
+        "sql": "version VARCHAR(64)",
+        "safe_add": true
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "eval_sessions",
+    "create_sql": "\nCREATE TABLE eval_sessions (\n\tid SERIAL NOT NULL, \n\tsession_id VARCHAR(36), \n\tname VARCHAR(128), \n\tstatus VARCHAR(16), \n\tcurrent_phase VARCHAR(32), \n\texpected_people INTEGER, \n\tstart_at TIMESTAMP WITHOUT TIME ZONE, \n\tend_at TIMESTAMP WITHOUT TIME ZONE, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "name",
+        "sql": "name VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16)",
+        "safe_add": true
+      },
+      {
+        "name": "current_phase",
+        "sql": "current_phase VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "expected_people",
+        "sql": "expected_people INTEGER",
+        "safe_add": true
+      },
+      {
+        "name": "start_at",
+        "sql": "start_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "end_at",
+        "sql": "end_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_eval_sessions_session_id",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_eval_sessions_session_id ON eval_sessions (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "events",
+    "create_sql": "\nCREATE TABLE events (\n\tid SERIAL NOT NULL, \n\tevent_id VARCHAR(36), \n\tsession_id VARCHAR(64), \n\tcamera_id VARCHAR(64), \n\tperson_id VARCHAR(64), \n\tseat_id VARCHAR(64), \n\tzone_id VARCHAR(64), \n\tskill_code VARCHAR(64), \n\tskill_version VARCHAR(32), \n\tmodel_name VARCHAR(64), \n\tmodel_version VARCHAR(32), \n\tevent_type VARCHAR(64), \n\tphase_id VARCHAR(32), \n\trisk_level VARCHAR(16), \n\tconfidence FLOAT, \n\treason TEXT, \n\toccurred_at TIMESTAMP WITHOUT TIME ZONE, \n\tstatus VARCHAR(16), \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "camera_id",
+        "sql": "camera_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "seat_id",
+        "sql": "seat_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "zone_id",
+        "sql": "zone_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "skill_code",
+        "sql": "skill_code VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "skill_version",
+        "sql": "skill_version VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "model_name",
+        "sql": "model_name VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "model_version",
+        "sql": "model_version VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "event_type",
+        "sql": "event_type VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "phase_id",
+        "sql": "phase_id VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "risk_level",
+        "sql": "risk_level VARCHAR(16)",
+        "safe_add": true
+      },
+      {
+        "name": "confidence",
+        "sql": "confidence FLOAT",
+        "safe_add": true
+      },
+      {
+        "name": "reason",
+        "sql": "reason TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "occurred_at",
+        "sql": "occurred_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16)",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_events_event_id",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_events_event_id ON events (event_id)"
+      },
+      {
+        "name": "ix_events_event_type",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_events_event_type ON events (event_type)"
+      },
+      {
+        "name": "ix_events_phase_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_events_phase_id ON events (phase_id)"
+      },
+      {
+        "name": "ix_events_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_events_session_id ON events (session_id)"
+      },
+      {
+        "name": "ix_events_status",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_events_status ON events (status)"
+      }
+    ]
+  },
+  {
+    "name": "evidence_video_assets",
+    "create_sql": "\nCREATE TABLE evidence_video_assets (\n\tasset_id VARCHAR(36) NOT NULL, \n\tfile_name VARCHAR(160) NOT NULL, \n\tsha256 VARCHAR(64) NOT NULL, \n\tsize VARCHAR(32) NOT NULL, \n\tsource_label VARCHAR(128), \n\tactor VARCHAR(64) NOT NULL, \n\tregistered_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (asset_id), \n\tCONSTRAINT evidence_video_name CHECK (length(btrim(file_name)) > 0), \n\tUNIQUE (file_name)\n)\n\n",
+    "columns": [
+      {
+        "name": "asset_id",
+        "sql": "asset_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "file_name",
+        "sql": "file_name VARCHAR(160) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "sha256",
+        "sql": "sha256 VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "size",
+        "sql": "size VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_label",
+        "sql": "source_label VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "registered_at",
+        "sql": "registered_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "evidences",
+    "create_sql": "\nCREATE TABLE evidences (\n\tid SERIAL NOT NULL, \n\tevent_id VARCHAR(36), \n\tevidence_type VARCHAR(32), \n\tobject_key VARCHAR(256), \n\tsha256 VARCHAR(64), \n\tcaptured_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "evidence_type",
+        "sql": "evidence_type VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "object_key",
+        "sql": "object_key VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "sha256",
+        "sql": "sha256 VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "captured_at",
+        "sql": "captured_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_evidences_event_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_evidences_event_id ON evidences (event_id)"
+      }
+    ]
+  },
+  {
+    "name": "face_verify_config",
+    "create_sql": "\nCREATE TABLE face_verify_config (\n\tid SERIAL NOT NULL, \n\tthreshold_same FLOAT NOT NULL, \n\tthreshold_suspect FLOAT NOT NULL, \n\tauto_enabled BOOLEAN NOT NULL, \n\tinterval_seconds INTEGER NOT NULL, \n\tupdated_by VARCHAR(64), \n\tupdated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "threshold_same",
+        "sql": "threshold_same FLOAT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "threshold_suspect",
+        "sql": "threshold_suspect FLOAT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "auto_enabled",
+        "sql": "auto_enabled BOOLEAN NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "interval_seconds",
+        "sql": "interval_seconds INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "updated_by",
+        "sql": "updated_by VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()",
+        "safe_add": true
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "observation_receipts",
+    "create_sql": "\nCREATE TABLE observation_receipts (\n\tobservation_id VARCHAR(256) NOT NULL, \n\tsession_id VARCHAR(256), \n\tsource_id VARCHAR(256) NOT NULL, \n\ttype VARCHAR(256) NOT NULL, \n\treceived_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (observation_id)\n)\n\n",
+    "columns": [
+      {
+        "name": "observation_id",
+        "sql": "observation_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "type",
+        "sql": "type VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "received_at",
+        "sql": "received_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "offline_qa_runs",
+    "create_sql": "\nCREATE TABLE offline_qa_runs (\n\trun_id VARCHAR(36) NOT NULL, \n\trecording_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tscenes JSONB NOT NULL, \n\ttask_keys JSONB NOT NULL, \n\tstatus VARCHAR(16) NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (run_id), \n\tCONSTRAINT offline_qa_status CHECK (status IN ('queued','completed','failed'))\n)\n\n",
+    "columns": [
+      {
+        "name": "run_id",
+        "sql": "run_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "recording_id",
+        "sql": "recording_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "scenes",
+        "sql": "scenes JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "task_keys",
+        "sql": "task_keys JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "operator_audit",
+    "create_sql": "\nCREATE TABLE operator_audit (\n\tid SERIAL NOT NULL, \n\toperator_id VARCHAR(36) NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\taction VARCHAR(32) NOT NULL, \n\tbefore JSONB NOT NULL, \n\tafter JSONB NOT NULL, \n\tat TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "operator_id",
+        "sql": "operator_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "action",
+        "sql": "action VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "before",
+        "sql": "before JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "after",
+        "sql": "after JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "at",
+        "sql": "at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_operator_audit_operator_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_operator_audit_operator_id ON operator_audit (operator_id)"
+      }
+    ]
+  },
+  {
+    "name": "operator_bindings",
+    "create_sql": "\nCREATE TABLE operator_bindings (\n\tid SERIAL NOT NULL, \n\tbinding_id VARCHAR(36), \n\toperator_id VARCHAR(36), \n\tsession_id VARCHAR(64), \n\tcamera_id VARCHAR(64), \n\tzone_id VARCHAR(36), \n\tenabled BOOLEAN, \n\tparameters JSONB NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "binding_id",
+        "sql": "binding_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "operator_id",
+        "sql": "operator_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "camera_id",
+        "sql": "camera_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "zone_id",
+        "sql": "zone_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "enabled",
+        "sql": "enabled BOOLEAN",
+        "safe_add": true
+      },
+      {
+        "name": "parameters",
+        "sql": "parameters JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_operator_bindings_binding_id",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_operator_bindings_binding_id ON operator_bindings (binding_id)"
+      },
+      {
+        "name": "ix_operator_bindings_camera_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_operator_bindings_camera_id ON operator_bindings (camera_id)"
+      },
+      {
+        "name": "ix_operator_bindings_operator_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_operator_bindings_operator_id ON operator_bindings (operator_id)"
+      },
+      {
+        "name": "ix_operator_bindings_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_operator_bindings_session_id ON operator_bindings (session_id)"
+      },
+      {
+        "name": "ix_operator_bindings_zone_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_operator_bindings_zone_id ON operator_bindings (zone_id)"
+      }
+    ]
+  },
+  {
+    "name": "operators",
+    "create_sql": "\nCREATE TABLE operators (\n\tid SERIAL NOT NULL, \n\toperator_id VARCHAR(36), \n\tcode VARCHAR(64), \n\tname VARCHAR(128), \n\tcategory VARCHAR(32), \n\tversion VARCHAR(32), \n\tenabled BOOLEAN, \n\tinput_types JSONB NOT NULL, \n\toutput_event_type VARCHAR(64), \n\trisk_level VARCHAR(16), \n\tparameters JSONB NOT NULL, \n\tdescription TEXT, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "operator_id",
+        "sql": "operator_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "code",
+        "sql": "code VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "name",
+        "sql": "name VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "category",
+        "sql": "category VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "version",
+        "sql": "version VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "enabled",
+        "sql": "enabled BOOLEAN",
+        "safe_add": true
+      },
+      {
+        "name": "input_types",
+        "sql": "input_types JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "output_event_type",
+        "sql": "output_event_type VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "risk_level",
+        "sql": "risk_level VARCHAR(16)",
+        "safe_add": true
+      },
+      {
+        "name": "parameters",
+        "sql": "parameters JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "description",
+        "sql": "description TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_operators_code",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_operators_code ON operators (code)"
+      },
+      {
+        "name": "ix_operators_operator_id",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_operators_operator_id ON operators (operator_id)"
+      }
+    ]
+  },
+  {
+    "name": "persons",
+    "create_sql": "\nCREATE TABLE persons (\n\tid SERIAL NOT NULL, \n\tperson_id VARCHAR(36), \n\tname VARCHAR(64), \n\trole VARCHAR(32), \n\texternal_id VARCHAR(64), \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "name",
+        "sql": "name VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "role",
+        "sql": "role VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "external_id",
+        "sql": "external_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_persons_person_id",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_persons_person_id ON persons (person_id)"
+      }
+    ]
+  },
+  {
+    "name": "reminder_attempts",
+    "create_sql": "\nCREATE TABLE reminder_attempts (\n\tattempt_id VARCHAR(36) NOT NULL, \n\texecution_id VARCHAR(36) NOT NULL, \n\tasset_url VARCHAR(256), \n\tasset_version VARCHAR(64), \n\tstatus VARCHAR(32) NOT NULL, \n\terror TEXT, \n\tstarted_at TIMESTAMP WITHOUT TIME ZONE, \n\tcompleted_at TIMESTAMP WITHOUT TIME ZONE, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (attempt_id)\n)\n\n",
+    "columns": [
+      {
+        "name": "attempt_id",
+        "sql": "attempt_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "execution_id",
+        "sql": "execution_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "asset_url",
+        "sql": "asset_url VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "asset_version",
+        "sql": "asset_version VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "error",
+        "sql": "error TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "started_at",
+        "sql": "started_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "completed_at",
+        "sql": "completed_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_reminder_attempts_execution_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_reminder_attempts_execution_id ON reminder_attempts (execution_id)"
+      }
+    ]
+  },
+  {
+    "name": "reminder_executions",
+    "create_sql": "\nCREATE TABLE reminder_executions (\n\texecution_id VARCHAR(36) NOT NULL, \n\tevent_id VARCHAR(36) NOT NULL, \n\tdecision_id INTEGER NOT NULL, \n\tstatus VARCHAR(32) NOT NULL, \n\tasset_url VARCHAR(256), \n\tasset_version VARCHAR(64), \n\terror TEXT, \n\tstarted_at TIMESTAMP WITHOUT TIME ZONE, \n\tcompleted_at TIMESTAMP WITHOUT TIME ZONE, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (execution_id), \n\tUNIQUE (decision_id)\n)\n\n",
+    "columns": [
+      {
+        "name": "execution_id",
+        "sql": "execution_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "decision_id",
+        "sql": "decision_id INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "asset_url",
+        "sql": "asset_url VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "asset_version",
+        "sql": "asset_version VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "error",
+        "sql": "error TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "started_at",
+        "sql": "started_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "completed_at",
+        "sql": "completed_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_reminder_executions_event_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_reminder_executions_event_id ON reminder_executions (event_id)"
+      }
+    ]
+  },
+  {
+    "name": "risk_clues",
+    "create_sql": "\nCREATE TABLE risk_clues (\n\tid SERIAL NOT NULL, \n\tclue_id VARCHAR(256) NOT NULL, \n\tsession_id VARCHAR(256), \n\tsource_id VARCHAR(256) NOT NULL, \n\tproject_id VARCHAR(256), \n\troom_id VARCHAR(256), \n\tstage_snapshot_id VARCHAR(256), \n\tphase_id VARCHAR(32), \n\tphase_version INTEGER, \n\tbinding_status VARCHAR(16) NOT NULL, \n\tscene_id VARCHAR(8) NOT NULL, \n\trule_id VARCHAR(256) NOT NULL, \n\trule_version VARCHAR(256) NOT NULL, \n\tconclusion VARCHAR(16) NOT NULL, \n\trisk_level VARCHAR(8) NOT NULL, \n\toccurred_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tmedia_run_id VARCHAR(256) NOT NULL, \n\tasset_id VARCHAR(256), \n\tstart_ms INTEGER NOT NULL, \n\tend_ms INTEGER NOT NULL, \n\tperson_id VARCHAR(256), \n\ttrack_id VARCHAR(256), \n\tseat_id VARCHAR(256), \n\tgap_id VARCHAR(512), \n\treason TEXT NOT NULL, \n\tobservation_ids JSONB NOT NULL, \n\tmissing_facts JSONB NOT NULL, \n\tquality_flags JSONB NOT NULL, \n\tevidence_refs JSONB NOT NULL, \n\tclue JSONB NOT NULL, \n\tevent_id VARCHAR(36), \n\tdeduped_from VARCHAR(256), \n\tcontract_version VARCHAR(16) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT risk_clue_conclusion CHECK (conclusion IN ('normal','suspected','insufficient')), \n\tCONSTRAINT risk_clue_risk_level CHECK (risk_level IN ('none','low','medium','high')), \n\tCONSTRAINT risk_clue_level_matches_conclusion CHECK ((conclusion = 'suspected' AND risk_level <> 'none') OR (conclusion <> 'suspected' AND risk_level = 'none')), \n\tCONSTRAINT risk_clue_binding CHECK (binding_status IN ('bound','unbound')), \n\tCONSTRAINT risk_clue_time_order CHECK (end_ms >= start_ms AND start_ms >= 0), \n\tUNIQUE (clue_id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "clue_id",
+        "sql": "clue_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "stage_snapshot_id",
+        "sql": "stage_snapshot_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "phase_id",
+        "sql": "phase_id VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "phase_version",
+        "sql": "phase_version INTEGER",
+        "safe_add": true
+      },
+      {
+        "name": "binding_status",
+        "sql": "binding_status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "scene_id",
+        "sql": "scene_id VARCHAR(8) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "rule_id",
+        "sql": "rule_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "rule_version",
+        "sql": "rule_version VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "conclusion",
+        "sql": "conclusion VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "risk_level",
+        "sql": "risk_level VARCHAR(8) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "occurred_at",
+        "sql": "occurred_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "media_run_id",
+        "sql": "media_run_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "asset_id",
+        "sql": "asset_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "start_ms",
+        "sql": "start_ms INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "end_ms",
+        "sql": "end_ms INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "track_id",
+        "sql": "track_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "seat_id",
+        "sql": "seat_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "gap_id",
+        "sql": "gap_id VARCHAR(512)",
+        "safe_add": true
+      },
+      {
+        "name": "reason",
+        "sql": "reason TEXT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "observation_ids",
+        "sql": "observation_ids JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "missing_facts",
+        "sql": "missing_facts JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "quality_flags",
+        "sql": "quality_flags JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "evidence_refs",
+        "sql": "evidence_refs JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "clue",
+        "sql": "clue JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "deduped_from",
+        "sql": "deduped_from VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "contract_version",
+        "sql": "contract_version VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_risk_clues_cooldown",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_risk_clues_cooldown ON risk_clues (session_id, source_id, scene_id, rule_id, media_run_id, occurred_at)"
+      },
+      {
+        "name": "ix_risk_clues_event_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_risk_clues_event_id ON risk_clues (event_id)"
+      },
+      {
+        "name": "ix_risk_clues_gap",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_risk_clues_gap ON risk_clues (session_id, source_id, gap_id)"
+      },
+      {
+        "name": "ix_risk_clues_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_risk_clues_session_id ON risk_clues (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "seats",
+    "create_sql": "\nCREATE TABLE seats (\n\tid SERIAL NOT NULL, \n\tseat_id VARCHAR(36), \n\tsession_id VARCHAR(36), \n\tcode VARCHAR(32), \n\tperson_id VARCHAR(36), \n\tzone_id VARCHAR(36), \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "seat_id",
+        "sql": "seat_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "code",
+        "sql": "code VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "zone_id",
+        "sql": "zone_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_seats_seat_id",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_seats_seat_id ON seats (seat_id)"
+      },
+      {
+        "name": "ix_seats_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_seats_session_id ON seats (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "sensitive_lexicon",
+    "create_sql": "\nCREATE TABLE sensitive_lexicon (\n\tword VARCHAR(64) NOT NULL, \n\trisk_level VARCHAR(16) NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\tnote VARCHAR(256), \n\tcategory VARCHAR(32), \n\tcreated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (word)\n)\n\n",
+    "columns": [
+      {
+        "name": "word",
+        "sql": "word VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "risk_level",
+        "sql": "risk_level VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "enabled",
+        "sql": "enabled BOOLEAN NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "note",
+        "sql": "note VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "category",
+        "sql": "category VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE DEFAULT now()",
+        "safe_add": true
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "sensitive_words",
+    "create_sql": "\nCREATE TABLE sensitive_words (\n\tid SERIAL NOT NULL, \n\tword VARCHAR(64), \n\thomophone VARCHAR(64), \n\tenabled BOOLEAN, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "word",
+        "sql": "word VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "homophone",
+        "sql": "homophone VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "enabled",
+        "sql": "enabled BOOLEAN",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "skills",
+    "create_sql": "\nCREATE TABLE skills (\n\tid SERIAL NOT NULL, \n\tskill_id VARCHAR(36), \n\tcode VARCHAR(64), \n\tversion VARCHAR(32), \n\tenabled BOOLEAN, \n\tparameters JSONB, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "skill_id",
+        "sql": "skill_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "code",
+        "sql": "code VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "version",
+        "sql": "version VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "enabled",
+        "sql": "enabled BOOLEAN",
+        "safe_add": true
+      },
+      {
+        "name": "parameters",
+        "sql": "parameters JSONB",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_skills_code",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_skills_code ON skills (code)"
+      },
+      {
+        "name": "ix_skills_skill_id",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_skills_skill_id ON skills (skill_id)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_operator_receipts",
+    "create_sql": "\nCREATE TABLE supervision_operator_receipts (\n\tconsumer_id VARCHAR(128) NOT NULL, \n\tconfiguration JSONB NOT NULL, \n\tapplied_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (consumer_id)\n)\n\n",
+    "columns": [
+      {
+        "name": "consumer_id",
+        "sql": "consumer_id VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "configuration",
+        "sql": "configuration JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "applied_at",
+        "sql": "applied_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "supervision_signals",
+    "create_sql": "\nCREATE TABLE supervision_signals (\n\tsession_id VARCHAR(64) NOT NULL, \n\tsource_id VARCHAR(64) NOT NULL, \n\tkind VARCHAR(16) NOT NULL, \n\tobserved_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tdetail JSONB NOT NULL, \n\tPRIMARY KEY (session_id, source_id, kind)\n)\n\n",
+    "columns": [
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "kind",
+        "sql": "kind VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "observed_at",
+        "sql": "observed_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "detail",
+        "sql": "detail JSONB NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "supervision_team_accounts",
+    "create_sql": "\nCREATE TABLE supervision_team_accounts (\n\taccount_id VARCHAR(36) NOT NULL, \n\tusername VARCHAR(32) NOT NULL, \n\tdisplay_name VARCHAR(64) NOT NULL, \n\tpassword_hash TEXT NOT NULL, \n\trole VARCHAR(16) NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tcreated_by VARCHAR(32) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (account_id), \n\tCHECK (role IN ('supervisor','operator','viewer')), \n\tUNIQUE (username)\n)\n\n",
+    "columns": [
+      {
+        "name": "account_id",
+        "sql": "account_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "username",
+        "sql": "username VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "display_name",
+        "sql": "display_name VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "password_hash",
+        "sql": "password_hash TEXT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "role",
+        "sql": "role VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "active",
+        "sql": "active BOOLEAN NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_by",
+        "sql": "created_by VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "workflow_audit",
+    "create_sql": "\nCREATE TABLE workflow_audit (\n\tid SERIAL NOT NULL, \n\tevent_id VARCHAR(36) NOT NULL, \n\taction VARCHAR(64) NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tnote TEXT, \n\tat TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "action",
+        "sql": "action VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "note",
+        "sql": "note TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "at",
+        "sql": "at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_workflow_audit_event_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_workflow_audit_event_id ON workflow_audit (event_id)"
+      }
+    ]
+  },
+  {
+    "name": "workflow_requests",
+    "create_sql": "\nCREATE TABLE workflow_requests (\n\trequest_id VARCHAR(64) NOT NULL, \n\tevent_id VARCHAR(36) NOT NULL, \n\taction VARCHAR(32) NOT NULL, \n\treviewer_id VARCHAR(64) NOT NULL, \n\tnote TEXT, \n\tdecision_id INTEGER NOT NULL, \n\tresult_status VARCHAR(16) NOT NULL, \n\tPRIMARY KEY (request_id)\n)\n\n",
+    "columns": [
+      {
+        "name": "request_id",
+        "sql": "request_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "action",
+        "sql": "action VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "reviewer_id",
+        "sql": "reviewer_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "note",
+        "sql": "note TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "decision_id",
+        "sql": "decision_id INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "result_status",
+        "sql": "result_status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "zones",
+    "create_sql": "\nCREATE TABLE zones (\n\tid SERIAL NOT NULL, \n\tzone_id VARCHAR(36), \n\tsession_id VARCHAR(36), \n\tcamera_id VARCHAR(64), \n\tname VARCHAR(64), \n\ttype VARCHAR(32), \n\tpolygon JSONB, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE, \n\tPRIMARY KEY (id)\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "zone_id",
+        "sql": "zone_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "camera_id",
+        "sql": "camera_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "name",
+        "sql": "name VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "type",
+        "sql": "type VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "polygon",
+        "sql": "polygon JSONB",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_zones_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_zones_session_id ON zones (session_id)"
+      },
+      {
+        "name": "ix_zones_zone_id",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_zones_zone_id ON zones (zone_id)"
+      }
+    ]
+  },
+  {
+    "name": "admin_sessions",
+    "create_sql": "\nCREATE TABLE admin_sessions (\n\ttoken_hash VARCHAR(64) NOT NULL, \n\taccount_id INTEGER NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tcsrf_token VARCHAR(64) NOT NULL, \n\tPRIMARY KEY (token_hash), \n\tFOREIGN KEY(account_id) REFERENCES admin_accounts (account_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "token_hash",
+        "sql": "token_hash VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "account_id",
+        "sql": "account_id INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "expires_at",
+        "sql": "expires_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "csrf_token",
+        "sql": "csrf_token VARCHAR(64) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_admin_sessions_account_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_admin_sessions_account_id ON admin_sessions (account_id)"
+      },
+      {
+        "name": "ix_admin_sessions_expires_at",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_admin_sessions_expires_at ON admin_sessions (expires_at)"
+      }
+    ]
+  },
+  {
+    "name": "audio_segments",
+    "create_sql": "\nCREATE TABLE audio_segments (\n\tsegment_id VARCHAR(36) NOT NULL, \n\trecording_id VARCHAR(36) NOT NULL, \n\tordinal INTEGER NOT NULL, \n\tspeaker VARCHAR(16), \n\tstart_ms INTEGER NOT NULL, \n\tend_ms INTEGER NOT NULL, \n\ttext TEXT NOT NULL, \n\tPRIMARY KEY (segment_id), \n\tCONSTRAINT audio_segment_time CHECK (start_ms >= 0 AND end_ms > start_ms), \n\tFOREIGN KEY(recording_id) REFERENCES audio_recordings (recording_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "segment_id",
+        "sql": "segment_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "recording_id",
+        "sql": "recording_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "ordinal",
+        "sql": "ordinal INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "speaker",
+        "sql": "speaker VARCHAR(16)",
+        "safe_add": true
+      },
+      {
+        "name": "start_ms",
+        "sql": "start_ms INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "end_ms",
+        "sql": "end_ms INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "text",
+        "sql": "text TEXT NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_audio_segments_recording_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_audio_segments_recording_id ON audio_segments (recording_id)"
+      }
+    ]
+  },
+  {
+    "name": "business_face_profiles",
+    "create_sql": "\nCREATE TABLE business_face_profiles (\n\tperson_id VARCHAR(36) NOT NULL, \n\tversion VARCHAR(36) NOT NULL, \n\tmodel VARCHAR(160) NOT NULL, \n\tregistered_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tembedding JSONB NOT NULL, \n\tphoto BYTEA NOT NULL, \n\tPRIMARY KEY (person_id), \n\tFOREIGN KEY(person_id) REFERENCES business_persons (person_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "version",
+        "sql": "version VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "model",
+        "sql": "model VARCHAR(160) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "registered_at",
+        "sql": "registered_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "embedding",
+        "sql": "embedding JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "photo",
+        "sql": "photo BYTEA NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "business_participants",
+    "create_sql": "\nCREATE TABLE business_participants (\n\tmembership_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\tperson_id VARCHAR(36) NOT NULL, \n\trole VARCHAR(16) NOT NULL, \n\tPRIMARY KEY (membership_id), \n\tCONSTRAINT business_participant_project_person UNIQUE (project_id, person_id), \n\tCONSTRAINT business_participant_role CHECK (role IN ('expert', 'supervisor', 'staff', 'owner', 'agent', 'bidder')), \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(person_id) REFERENCES business_persons (person_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "membership_id",
+        "sql": "membership_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "role",
+        "sql": "role VARCHAR(16) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "business_rooms",
+    "create_sql": "\nCREATE TABLE business_rooms (\n\troom_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\tcode VARCHAR(64) NOT NULL, \n\tname VARCHAR(128) NOT NULL, \n\tlocation VARCHAR(256) NOT NULL, \n\tmode VARCHAR(16) NOT NULL, \n\tenabled BOOLEAN NOT NULL, \n\tPRIMARY KEY (room_id), \n\tCONSTRAINT business_room_project_code UNIQUE (project_id, code), \n\tCONSTRAINT business_room_project_pair UNIQUE (room_id, project_id), \n\tCONSTRAINT business_room_mode CHECK (mode IN ('centralized', 'remote')), \n\tCONSTRAINT business_room_text CHECK (length(btrim(code)) > 0 AND length(btrim(name)) > 0 AND length(btrim(location)) > 0), \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "code",
+        "sql": "code VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "name",
+        "sql": "name VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "location",
+        "sql": "location VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "mode",
+        "sql": "mode VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "enabled",
+        "sql": "enabled BOOLEAN NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "offline_qa_jobs",
+    "create_sql": "\nCREATE TABLE offline_qa_jobs (\n\tjob_id VARCHAR(36) NOT NULL, \n\trequest_id VARCHAR(64) NOT NULL, \n\trequest_digest VARCHAR(64) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(256) NOT NULL, \n\tbinding_id VARCHAR(36) NOT NULL, \n\tasset_id VARCHAR(256) NOT NULL, \n\tstatus VARCHAR(16) NOT NULL, \n\tcancel_requested BOOLEAN NOT NULL, \n\tfrozen JSONB NOT NULL, \n\tprogress_ms INTEGER NOT NULL, \n\tattempts INTEGER NOT NULL, \n\tmax_attempts INTEGER NOT NULL, \n\tclaim_id VARCHAR(36), \n\tclaimed_by VARCHAR(128), \n\tclaim_at TIMESTAMP WITH TIME ZONE, \n\terror JSONB, \n\tresult JSONB, \n\tcreated_by VARCHAR(128) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tfinished_at TIMESTAMP WITH TIME ZONE, \n\tcontract_version VARCHAR(16) NOT NULL, \n\tPRIMARY KEY (job_id), \n\tCONSTRAINT offline_qa_job_status CHECK (status IN ('queued','running','succeeded','failed','cancelled')), \n\tCONSTRAINT offline_qa_job_counters CHECK (progress_ms >= 0 AND attempts >= 0 AND max_attempts >= 1), \n\tCONSTRAINT offline_qa_job_claim CHECK ((status = 'running') = (claim_id IS NOT NULL)), \n\tUNIQUE (request_id), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "job_id",
+        "sql": "job_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "request_id",
+        "sql": "request_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "request_digest",
+        "sql": "request_digest VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "binding_id",
+        "sql": "binding_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "asset_id",
+        "sql": "asset_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "cancel_requested",
+        "sql": "cancel_requested BOOLEAN NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "frozen",
+        "sql": "frozen JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "progress_ms",
+        "sql": "progress_ms INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "attempts",
+        "sql": "attempts INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "max_attempts",
+        "sql": "max_attempts INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "claim_id",
+        "sql": "claim_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "claimed_by",
+        "sql": "claimed_by VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "claim_at",
+        "sql": "claim_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "error",
+        "sql": "error JSONB",
+        "safe_add": true
+      },
+      {
+        "name": "result",
+        "sql": "result JSONB",
+        "safe_add": true
+      },
+      {
+        "name": "created_by",
+        "sql": "created_by VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "finished_at",
+        "sql": "finished_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "contract_version",
+        "sql": "contract_version VARCHAR(16) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_offline_qa_jobs_binding_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_offline_qa_jobs_binding_id ON offline_qa_jobs (binding_id)"
+      },
+      {
+        "name": "ix_offline_qa_jobs_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_offline_qa_jobs_session_id ON offline_qa_jobs (session_id)"
+      },
+      {
+        "name": "ix_offline_qa_jobs_status",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_offline_qa_jobs_status ON offline_qa_jobs (status)"
+      }
+    ]
+  },
+  {
+    "name": "recording_capture_times",
+    "create_sql": "\nCREATE TABLE recording_capture_times (\n\trecording_id VARCHAR(36) NOT NULL, \n\tstarted_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (recording_id), \n\tFOREIGN KEY(recording_id) REFERENCES audio_recordings (recording_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "recording_id",
+        "sql": "recording_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "started_at",
+        "sql": "started_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "semantic_analyses",
+    "create_sql": "\nCREATE TABLE semantic_analyses (\n\tanalysis_id VARCHAR(36) NOT NULL, \n\trecording_id VARCHAR(36) NOT NULL, \n\ttask_key VARCHAR(64) NOT NULL, \n\tscene_id VARCHAR(8) NOT NULL, \n\twindow_start_ms INTEGER NOT NULL, \n\twindow_end_ms INTEGER NOT NULL, \n\tstatus VARCHAR(16) NOT NULL, \n\trequest_snapshot JSONB NOT NULL, \n\tresult JSONB, \n\terror JSONB, \n\tclaim_id VARCHAR(36), \n\tclaimed_by VARCHAR(128), \n\tclaim_at TIMESTAMP WITH TIME ZONE, \n\tattempts INTEGER NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tcompleted_at TIMESTAMP WITH TIME ZONE, \n\tPRIMARY KEY (analysis_id), \n\tCONSTRAINT semantic_scene_id CHECK (scene_id IN ('S06','S07')), \n\tCONSTRAINT semantic_analysis_status CHECK (status IN ('queued','processing','ready','failed')), \n\tCONSTRAINT semantic_window_time CHECK (window_start_ms >= 0 AND window_end_ms > window_start_ms), \n\tFOREIGN KEY(recording_id) REFERENCES audio_recordings (recording_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "analysis_id",
+        "sql": "analysis_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "recording_id",
+        "sql": "recording_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "task_key",
+        "sql": "task_key VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "scene_id",
+        "sql": "scene_id VARCHAR(8) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "window_start_ms",
+        "sql": "window_start_ms INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "window_end_ms",
+        "sql": "window_end_ms INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "request_snapshot",
+        "sql": "request_snapshot JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "result",
+        "sql": "result JSONB",
+        "safe_add": true
+      },
+      {
+        "name": "error",
+        "sql": "error JSONB",
+        "safe_add": true
+      },
+      {
+        "name": "claim_id",
+        "sql": "claim_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "claimed_by",
+        "sql": "claimed_by VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "claim_at",
+        "sql": "claim_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "attempts",
+        "sql": "attempts INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "completed_at",
+        "sql": "completed_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_semantic_analyses_claim_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_semantic_analyses_claim_id ON semantic_analyses (claim_id)"
+      },
+      {
+        "name": "ix_semantic_analyses_recording_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_semantic_analyses_recording_id ON semantic_analyses (recording_id)"
+      },
+      {
+        "name": "ix_semantic_analyses_scene_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_semantic_analyses_scene_id ON semantic_analyses (scene_id)"
+      },
+      {
+        "name": "ix_semantic_analyses_status",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_semantic_analyses_status ON semantic_analyses (status)"
+      },
+      {
+        "name": "ix_semantic_analyses_task_key",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_semantic_analyses_task_key ON semantic_analyses (task_key)"
+      }
+    ]
+  },
+  {
+    "name": "stage_assets",
+    "create_sql": "\nCREATE TABLE stage_assets (\n\tid VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tasset_id VARCHAR(256) NOT NULL, \n\tasset_type VARCHAR(16) NOT NULL, \n\trelative_path VARCHAR(1024) NOT NULL, \n\tsha256 VARCHAR(64) NOT NULL, \n\tduration_ms INTEGER, \n\tauthorization_source VARCHAR(256) NOT NULL, \n\tvisibility_notes VARCHAR(4096) NOT NULL, \n\tsize_bytes BIGINT NOT NULL, \n\tprobe JSONB NOT NULL, \n\tregistered_by VARCHAR(128) NOT NULL, \n\tregistered_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tcontract_version VARCHAR(16) NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT stage_asset_session_asset UNIQUE (session_id, asset_id), \n\tCONSTRAINT stage_asset_type CHECK (asset_type IN ('video', 'audio', 'scoring')), \n\tCONSTRAINT stage_asset_duration CHECK ((asset_type = 'scoring' AND duration_ms IS NULL) OR (asset_type <> 'scoring' AND duration_ms >= 1)), \n\tCONSTRAINT stage_asset_id_text CHECK (length(trim(asset_id)) > 0), \n\tCONSTRAINT stage_asset_sha256_len CHECK (length(sha256) = 64), \n\tCONSTRAINT stage_asset_size CHECK (size_bytes >= 0), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "asset_id",
+        "sql": "asset_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "asset_type",
+        "sql": "asset_type VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "relative_path",
+        "sql": "relative_path VARCHAR(1024) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "sha256",
+        "sql": "sha256 VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "duration_ms",
+        "sql": "duration_ms INTEGER",
+        "safe_add": true
+      },
+      {
+        "name": "authorization_source",
+        "sql": "authorization_source VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "visibility_notes",
+        "sql": "visibility_notes VARCHAR(4096) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "size_bytes",
+        "sql": "size_bytes BIGINT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "probe",
+        "sql": "probe JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "registered_by",
+        "sql": "registered_by VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "registered_at",
+        "sql": "registered_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "contract_version",
+        "sql": "contract_version VARCHAR(16) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_stage_assets_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_stage_assets_session_id ON stage_assets (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "stage_media_bindings",
+    "create_sql": "\nCREATE TABLE stage_media_bindings (\n\tbinding_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(256) NOT NULL, \n\tkind VARCHAR(16) NOT NULL, \n\tsubject_id VARCHAR(256) NOT NULL, \n\tasset_id VARCHAR(256), \n\tstarted_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tduration_ms BIGINT, \n\ttimeline JSONB NOT NULL, \n\trequest_id VARCHAR(64) NOT NULL, \n\trequest_digest VARCHAR(64) NOT NULL, \n\tcreated_by VARCHAR(128) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tcontract_version VARCHAR(16) NOT NULL, \n\tPRIMARY KEY (binding_id), \n\tCONSTRAINT stage_media_binding_subject UNIQUE (kind, subject_id), \n\tCONSTRAINT stage_media_binding_kind CHECK (kind IN ('recording','media_run','scoring')), \n\tCONSTRAINT stage_media_binding_duration CHECK (duration_ms IS NULL OR duration_ms >= 0), \n\tCONSTRAINT stage_media_binding_subject_text CHECK (length(btrim(subject_id)) > 0), \n\tCONSTRAINT stage_media_binding_scoring_asset CHECK ((kind = 'scoring' AND asset_id IS NOT NULL) OR kind <> 'scoring'), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT, \n\tUNIQUE (request_id)\n)\n\n",
+    "columns": [
+      {
+        "name": "binding_id",
+        "sql": "binding_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "kind",
+        "sql": "kind VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "subject_id",
+        "sql": "subject_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "asset_id",
+        "sql": "asset_id VARCHAR(256)",
+        "safe_add": true
+      },
+      {
+        "name": "started_at",
+        "sql": "started_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "duration_ms",
+        "sql": "duration_ms BIGINT",
+        "safe_add": true
+      },
+      {
+        "name": "timeline",
+        "sql": "timeline JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "request_id",
+        "sql": "request_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "request_digest",
+        "sql": "request_digest VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_by",
+        "sql": "created_by VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "contract_version",
+        "sql": "contract_version VARCHAR(16) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_stage_media_bindings_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_stage_media_bindings_session_id ON stage_media_bindings (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_archives",
+    "create_sql": "\nCREATE TABLE supervision_archives (\n\tevent_id VARCHAR(36) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tresolution VARCHAR(32), \n\tactor VARCHAR(64) NOT NULL, \n\tnote TEXT NOT NULL, \n\tevidence_note TEXT, \n\tsnapshot JSONB NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (event_id, version), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "version",
+        "sql": "version INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "resolution",
+        "sql": "resolution VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "note",
+        "sql": "note TEXT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "evidence_note",
+        "sql": "evidence_note TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "snapshot",
+        "sql": "snapshot JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "supervision_audio_links",
+    "create_sql": "\nCREATE TABLE supervision_audio_links (\n\tevent_id VARCHAR(36) NOT NULL, \n\trecording_id VARCHAR(36) NOT NULL, \n\tcapture_started_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tnote TEXT NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (event_id, recording_id), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(recording_id) REFERENCES audio_recordings (recording_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "recording_id",
+        "sql": "recording_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "capture_started_at",
+        "sql": "capture_started_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "note",
+        "sql": "note TEXT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "supervision_cases",
+    "create_sql": "\nCREATE TABLE supervision_cases (\n\tevent_id VARCHAR(36) NOT NULL, \n\tstatus VARCHAR(24) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tresolution VARCHAR(32), \n\tassignee VARCHAR(128), \n\tdue_at TIMESTAMP WITHOUT TIME ZONE, \n\tfeedback TEXT, \n\tarchived_at TIMESTAMP WITHOUT TIME ZONE, \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (event_id), \n\tCONSTRAINT supervision_case_status CHECK (status IN ('PENDING','SUPPLEMENT','CONFIRMED','ASSIGNED','FEEDBACK','ARCHIVED')), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(24) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "version",
+        "sql": "version INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "resolution",
+        "sql": "resolution VARCHAR(32)",
+        "safe_add": true
+      },
+      {
+        "name": "assignee",
+        "sql": "assignee VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "due_at",
+        "sql": "due_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "feedback",
+        "sql": "feedback TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "archived_at",
+        "sql": "archived_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_cases_status",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_cases_status ON supervision_cases (status)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_channels",
+    "create_sql": "\nCREATE TABLE supervision_channels (\n\tchannel_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(64) NOT NULL, \n\tname VARCHAR(128) NOT NULL, \n\tkind VARCHAR(16) NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (channel_id), \n\tUNIQUE (session_id, source_id), \n\tCHECK (kind IN ('video','audio')), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "channel_id",
+        "sql": "channel_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "name",
+        "sql": "name VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "kind",
+        "sql": "kind VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "active",
+        "sql": "active BOOLEAN NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_channels_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_channels_session_id ON supervision_channels (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_coverage_samples",
+    "create_sql": "\nCREATE TABLE supervision_coverage_samples (\n\tid SERIAL NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(64) NOT NULL, \n\tobserved_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tstates JSONB NOT NULL, \n\tPRIMARY KEY (id), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "observed_at",
+        "sql": "observed_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "states",
+        "sql": "states JSONB NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_coverage_samples_observed_at",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_coverage_samples_observed_at ON supervision_coverage_samples (observed_at)"
+      },
+      {
+        "name": "ix_supervision_coverage_samples_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_coverage_samples_session_id ON supervision_coverage_samples (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_event_spans",
+    "create_sql": "\nCREATE TABLE supervision_event_spans (\n\tevent_id VARCHAR(36) NOT NULL, \n\tgroup_key VARCHAR(64), \n\tstarted_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tlast_seen_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tended_at TIMESTAMP WITHOUT TIME ZONE, \n\tactive BOOLEAN NOT NULL, \n\ttrigger_count INTEGER NOT NULL, \n\tend_basis VARCHAR(32), \n\tPRIMARY KEY (event_id), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "group_key",
+        "sql": "group_key VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "started_at",
+        "sql": "started_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "last_seen_at",
+        "sql": "last_seen_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "ended_at",
+        "sql": "ended_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "active",
+        "sql": "active BOOLEAN NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "trigger_count",
+        "sql": "trigger_count INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "end_basis",
+        "sql": "end_basis VARCHAR(32)",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_event_spans_group_key",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_event_spans_group_key ON supervision_event_spans (group_key)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_evidence_annotations",
+    "create_sql": "\nCREATE TABLE supervision_evidence_annotations (\n\tannotation_id VARCHAR(36) NOT NULL, \n\tevent_id VARCHAR(36) NOT NULL, \n\trecording_id VARCHAR(36) NOT NULL, \n\tsegment_id VARCHAR(36) NOT NULL, \n\tkind VARCHAR(32) NOT NULL, \n\toriginal JSONB NOT NULL, \n\tcorrection TEXT NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (annotation_id), \n\tCHECK (kind IN ('transcript_correction','identity_note')), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(recording_id) REFERENCES audio_recordings (recording_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "annotation_id",
+        "sql": "annotation_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "recording_id",
+        "sql": "recording_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "segment_id",
+        "sql": "segment_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "kind",
+        "sql": "kind VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "original",
+        "sql": "original JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "correction",
+        "sql": "correction TEXT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_evidence_annotations_event_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_evidence_annotations_event_id ON supervision_evidence_annotations (event_id)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_evidence_windows",
+    "create_sql": "\nCREATE TABLE supervision_evidence_windows (\n\tevent_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(64) NOT NULL, \n\tstarted_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tended_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tnote TEXT NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (event_id, source_id), \n\tCHECK (ended_at > started_at), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "started_at",
+        "sql": "started_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "ended_at",
+        "sql": "ended_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "note",
+        "sql": "note TEXT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "supervision_media_holds",
+    "create_sql": "\nCREATE TABLE supervision_media_holds (\n\tevent_id VARCHAR(36) NOT NULL, \n\tstatus VARCHAR(24) NOT NULL, \n\tmanifest JSONB NOT NULL, \n\terror TEXT, \n\tattempts INTEGER NOT NULL, \n\tnext_retry_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (event_id), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(24) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "manifest",
+        "sql": "manifest JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "error",
+        "sql": "error TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "attempts",
+        "sql": "attempts INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "next_retry_at",
+        "sql": "next_retry_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_media_holds_next_retry_at",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_media_holds_next_retry_at ON supervision_media_holds (next_retry_at)"
+      },
+      {
+        "name": "ix_supervision_media_holds_status",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_media_holds_status ON supervision_media_holds (status)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_occurrences",
+    "create_sql": "\nCREATE TABLE supervision_occurrences (\n\toccurrence_id VARCHAR(64) NOT NULL, \n\tevent_id VARCHAR(36) NOT NULL, \n\toccurred_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tdetail JSONB NOT NULL, \n\tPRIMARY KEY (occurrence_id), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "occurrence_id",
+        "sql": "occurrence_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "occurred_at",
+        "sql": "occurred_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "detail",
+        "sql": "detail JSONB NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_occurrences_event_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_occurrences_event_id ON supervision_occurrences (event_id)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_operations",
+    "create_sql": "\nCREATE TABLE supervision_operations (\n\trequest_id VARCHAR(64) NOT NULL, \n\tevent_id VARCHAR(36) NOT NULL, \n\tfingerprint VARCHAR(64) NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tresult JSONB NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (request_id), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "request_id",
+        "sql": "request_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "fingerprint",
+        "sql": "fingerprint VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "result",
+        "sql": "result JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_operations_event_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_operations_event_id ON supervision_operations (event_id)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_session_reports",
+    "create_sql": "\nCREATE TABLE supervision_session_reports (\n\treport_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tsnapshot JSONB NOT NULL, \n\tPRIMARY KEY (report_id), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "report_id",
+        "sql": "report_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "snapshot",
+        "sql": "snapshot JSONB NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_session_reports_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_session_reports_session_id ON supervision_session_reports (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "supervision_task_receipts",
+    "create_sql": "\nCREATE TABLE supervision_task_receipts (\n\tevent_id VARCHAR(36) NOT NULL, \n\tassignment_version INTEGER NOT NULL, \n\tassignee VARCHAR(128) NOT NULL, \n\treceived_by VARCHAR(64), \n\treceived_at TIMESTAMP WITHOUT TIME ZONE, \n\tnote TEXT, \n\tPRIMARY KEY (event_id, assignment_version), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "assignment_version",
+        "sql": "assignment_version INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "assignee",
+        "sql": "assignee VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "received_by",
+        "sql": "received_by VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "received_at",
+        "sql": "received_at TIMESTAMP WITHOUT TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "note",
+        "sql": "note TEXT",
+        "safe_add": true
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "supervision_team_sessions",
+    "create_sql": "\nCREATE TABLE supervision_team_sessions (\n\ttoken_hash VARCHAR(64) NOT NULL, \n\taccount_id VARCHAR(36) NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tcsrf_token VARCHAR(64) NOT NULL, \n\tPRIMARY KEY (token_hash), \n\tFOREIGN KEY(account_id) REFERENCES supervision_team_accounts (account_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "token_hash",
+        "sql": "token_hash VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "account_id",
+        "sql": "account_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "expires_at",
+        "sql": "expires_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "csrf_token",
+        "sql": "csrf_token VARCHAR(64) NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_team_sessions_account_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_team_sessions_account_id ON supervision_team_sessions (account_id)"
+      }
+    ]
+  },
+  {
+    "name": "business_authorization_snapshots",
+    "create_sql": "\nCREATE TABLE business_authorization_snapshots (\n\tsnapshot_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tphase_id VARCHAR(64), \n\tinformation_visibility VARCHAR(16) NOT NULL, \n\tconfidentiality_policy_id VARCHAR(64), \n\tstatus VARCHAR(16) NOT NULL, \n\tcreated_by VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (snapshot_id), \n\tCONSTRAINT business_authz_status CHECK (status IN ('active', 'superseded')), \n\tCONSTRAINT business_authz_visibility CHECK (information_visibility IN ('public', 'confidential')), \n\tCONSTRAINT business_authz_room_project_fk FOREIGN KEY(room_id, project_id) REFERENCES business_rooms (room_id, project_id) ON DELETE RESTRICT, \n\tCONSTRAINT business_authz_policy_text CHECK (length(btrim(confidentiality_policy_id)) > 0), \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(room_id) REFERENCES business_rooms (room_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "snapshot_id",
+        "sql": "snapshot_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "phase_id",
+        "sql": "phase_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "information_visibility",
+        "sql": "information_visibility VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "confidentiality_policy_id",
+        "sql": "confidentiality_policy_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_by",
+        "sql": "created_by VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "business_authz_room_active_unique",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS business_authz_room_active_unique ON business_authorization_snapshots (room_id) WHERE status = 'active'"
+      }
+    ]
+  },
+  {
+    "name": "business_score_records",
+    "create_sql": "\nCREATE TABLE business_score_records (\n\trecord_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tphase_id VARCHAR(64) NOT NULL, \n\tpayload JSONB NOT NULL, \n\tcontent_sha256 VARCHAR(64) NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (record_id), \n\tCONSTRAINT business_score_room_project_fk FOREIGN KEY(room_id, project_id) REFERENCES business_rooms (room_id, project_id) ON DELETE RESTRICT, \n\tCONSTRAINT business_score_phase_text CHECK (length(btrim(phase_id)) > 0), \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(room_id) REFERENCES business_rooms (room_id) ON DELETE RESTRICT, \n\tUNIQUE (content_sha256)\n)\n\n",
+    "columns": [
+      {
+        "name": "record_id",
+        "sql": "record_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "phase_id",
+        "sql": "phase_id VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "payload",
+        "sql": "payload JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "content_sha256",
+        "sql": "content_sha256 VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "business_seats",
+    "create_sql": "\nCREATE TABLE business_seats (\n\tseat_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\tcode VARCHAR(64) NOT NULL, \n\tperson_id VARCHAR(36), \n\tenabled BOOLEAN NOT NULL, \n\tPRIMARY KEY (seat_id), \n\tCONSTRAINT business_seat_room_code UNIQUE (room_id, code), \n\tCONSTRAINT business_seat_project_person UNIQUE (project_id, person_id), \n\tCONSTRAINT business_seat_room_pair UNIQUE (seat_id, room_id), \n\tCONSTRAINT business_seat_room_project_fk FOREIGN KEY(room_id, project_id) REFERENCES business_rooms (room_id, project_id) ON DELETE RESTRICT, \n\tCONSTRAINT business_seat_membership_fk FOREIGN KEY(project_id, person_id) REFERENCES business_participants (project_id, person_id) ON DELETE RESTRICT, \n\tCONSTRAINT business_seat_code CHECK (length(btrim(code)) > 0), \n\tFOREIGN KEY(room_id) REFERENCES business_rooms (room_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(person_id) REFERENCES business_persons (person_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "seat_id",
+        "sql": "seat_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "code",
+        "sql": "code VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "enabled",
+        "sql": "enabled BOOLEAN NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "media_bindings",
+    "create_sql": "\nCREATE TABLE media_bindings (\n\tbinding_id VARCHAR(36) NOT NULL, \n\trecording_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (binding_id), \n\tCONSTRAINT media_binding_room_project_fk FOREIGN KEY(room_id, project_id) REFERENCES business_rooms (room_id, project_id) ON DELETE CASCADE, \n\tCONSTRAINT media_binding_recording_text CHECK (length(btrim(recording_id)) > 0), \n\tUNIQUE (recording_id), \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE CASCADE, \n\tFOREIGN KEY(room_id) REFERENCES business_rooms (room_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "binding_id",
+        "sql": "binding_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "recording_id",
+        "sql": "recording_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "person_verification_links",
+    "create_sql": "\nCREATE TABLE person_verification_links (\n\tlink_id VARCHAR(36) NOT NULL, \n\tperson_id VARCHAR(36) NOT NULL, \n\ttoken_hash VARCHAR(64) NOT NULL, \n\treference_version VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36), \n\troom_id VARCHAR(36), \n\tproject_name VARCHAR(128), \n\troom_name VARCHAR(128), \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\texpires_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\trevoked_at TIMESTAMP WITH TIME ZONE, \n\tcompleted_at TIMESTAMP WITH TIME ZONE, \n\tattempts INTEGER NOT NULL, \n\tmax_attempts INTEGER NOT NULL, \n\tPRIMARY KEY (link_id), \n\tCONSTRAINT person_verification_attempt_limit CHECK (attempts >= 0 AND attempts <= max_attempts AND max_attempts = 5), \n\tFOREIGN KEY(person_id) REFERENCES business_persons (person_id) ON DELETE CASCADE, \n\tUNIQUE (token_hash), \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE CASCADE, \n\tFOREIGN KEY(room_id) REFERENCES business_rooms (room_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "link_id",
+        "sql": "link_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "token_hash",
+        "sql": "token_hash VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "reference_version",
+        "sql": "reference_version VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "project_name",
+        "sql": "project_name VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "room_name",
+        "sql": "room_name VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "expires_at",
+        "sql": "expires_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "revoked_at",
+        "sql": "revoked_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "completed_at",
+        "sql": "completed_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "attempts",
+        "sql": "attempts INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "max_attempts",
+        "sql": "max_attempts INTEGER NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_person_verification_links_person_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_person_verification_links_person_id ON person_verification_links (person_id)"
+      }
+    ]
+  },
+  {
+    "name": "phase_bindings",
+    "create_sql": "\nCREATE TABLE phase_bindings (\n\tbinding_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(256) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tPRIMARY KEY (binding_id), \n\tCONSTRAINT phase_binding_room_project FOREIGN KEY(room_id, project_id) REFERENCES business_rooms (room_id, project_id) ON DELETE RESTRICT, \n\tCONSTRAINT phase_binding_scope UNIQUE (session_id, project_id, room_id, source_id), \n\tCONSTRAINT phase_binding_session_text CHECK (length(btrim(session_id)) > 0), \n\tCONSTRAINT phase_binding_project_text CHECK (length(btrim(project_id)) > 0), \n\tCONSTRAINT phase_binding_room_text CHECK (length(btrim(room_id)) > 0), \n\tCONSTRAINT phase_binding_source_text CHECK (length(btrim(source_id)) > 0), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "binding_id",
+        "sql": "binding_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "active",
+        "sql": "active BOOLEAN NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_phase_bindings_project_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_phase_bindings_project_id ON phase_bindings (project_id)"
+      },
+      {
+        "name": "ix_phase_bindings_room_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_phase_bindings_room_id ON phase_bindings (room_id)"
+      },
+      {
+        "name": "ix_phase_bindings_session_id",
+        "sql": "CREATE UNIQUE INDEX IF NOT EXISTS ix_phase_bindings_session_id ON phase_bindings (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "semantic_business_snapshots",
+    "create_sql": "\nCREATE TABLE semantic_business_snapshots (\n\tanalysis_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tsnapshot JSONB NOT NULL, \n\tPRIMARY KEY (analysis_id), \n\tFOREIGN KEY(analysis_id) REFERENCES semantic_analyses (analysis_id) ON DELETE CASCADE, \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(room_id) REFERENCES business_rooms (room_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "analysis_id",
+        "sql": "analysis_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "snapshot",
+        "sql": "snapshot JSONB NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "semantic_event_links",
+    "create_sql": "\nCREATE TABLE semantic_event_links (\n\tanalysis_id VARCHAR(36) NOT NULL, \n\tevent_id VARCHAR(36) NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (analysis_id), \n\tFOREIGN KEY(analysis_id) REFERENCES semantic_analyses (analysis_id) ON DELETE RESTRICT, \n\tUNIQUE (event_id), \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "analysis_id",
+        "sql": "analysis_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "source_zone_configs",
+    "create_sql": "\nCREATE TABLE source_zone_configs (\n\tconfig_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(256) NOT NULL, \n\tconfig_version INTEGER NOT NULL, \n\tzones JSONB NOT NULL, \n\tentry_lines JSONB NOT NULL, \n\tupdated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (config_id), \n\tCONSTRAINT source_zone_config_room_project FOREIGN KEY(room_id, project_id) REFERENCES business_rooms (room_id, project_id) ON DELETE RESTRICT, \n\tCONSTRAINT source_zone_config_session_source UNIQUE (session_id, source_id), \n\tCONSTRAINT source_zone_config_version_positive CHECK (config_version > 0), \n\tCONSTRAINT source_zone_config_source_nonempty CHECK (length(btrim(source_id)) > 0), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "config_id",
+        "sql": "config_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "config_version",
+        "sql": "config_version INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "zones",
+        "sql": "zones JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "entry_lines",
+        "sql": "entry_lines JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "updated_at",
+        "sql": "updated_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "supervision_intake_failures",
+    "create_sql": "\nCREATE TABLE supervision_intake_failures (\n\tanalysis_id VARCHAR(36) NOT NULL, \n\tattempts INTEGER NOT NULL, \n\terror TEXT NOT NULL, \n\tnext_retry_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (analysis_id), \n\tFOREIGN KEY(analysis_id) REFERENCES semantic_analyses (analysis_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "analysis_id",
+        "sql": "analysis_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "attempts",
+        "sql": "attempts INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "error",
+        "sql": "error TEXT NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "next_retry_at",
+        "sql": "next_retry_at TIMESTAMP WITHOUT TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_supervision_intake_failures_next_retry_at",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_supervision_intake_failures_next_retry_at ON supervision_intake_failures (next_retry_at)"
+      }
+    ]
+  },
+  {
+    "name": "business_attendance_facts",
+    "create_sql": "\nCREATE TABLE business_attendance_facts (\n\tfact_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tfact_type VARCHAR(16) NOT NULL, \n\tperson_id VARCHAR(36), \n\tseat_id VARCHAR(36), \n\tphase_id VARCHAR(64), \n\toccurred_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tnote TEXT, \n\tpayload JSONB, \n\tactor VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (fact_id), \n\tCONSTRAINT business_fact_type CHECK (fact_type IN ('check_in', 'check_out', 'change', 'leave_permit', 'clarification')), \n\tCONSTRAINT business_fact_room_project_fk FOREIGN KEY(room_id, project_id) REFERENCES business_rooms (room_id, project_id) ON DELETE RESTRICT, \n\tCONSTRAINT business_fact_membership_fk FOREIGN KEY(project_id, person_id) REFERENCES business_participants (project_id, person_id) ON DELETE RESTRICT, \n\tCONSTRAINT business_fact_phase_text CHECK (length(btrim(phase_id)) > 0), \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(room_id) REFERENCES business_rooms (room_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(person_id) REFERENCES business_persons (person_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(seat_id) REFERENCES business_seats (seat_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "fact_id",
+        "sql": "fact_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "fact_type",
+        "sql": "fact_type VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "seat_id",
+        "sql": "seat_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "phase_id",
+        "sql": "phase_id VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "occurred_at",
+        "sql": "occurred_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "note",
+        "sql": "note TEXT",
+        "safe_add": true
+      },
+      {
+        "name": "payload",
+        "sql": "payload JSONB",
+        "safe_add": true
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "business_event_contexts",
+    "create_sql": "\nCREATE TABLE business_event_contexts (\n\tevent_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tseat_id VARCHAR(36), \n\tperson_id VARCHAR(36), \n\tsnapshot JSONB NOT NULL, \n\tPRIMARY KEY (event_id), \n\tCONSTRAINT business_context_room_project_fk FOREIGN KEY(room_id, project_id) REFERENCES business_rooms (room_id, project_id) ON DELETE RESTRICT, \n\tCONSTRAINT business_context_seat_room_fk FOREIGN KEY(seat_id, room_id) REFERENCES business_seats (seat_id, room_id) ON DELETE RESTRICT, \n\tCONSTRAINT business_context_membership_fk FOREIGN KEY(project_id, person_id) REFERENCES business_participants (project_id, person_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(event_id) REFERENCES events (event_id) ON DELETE CASCADE, \n\tFOREIGN KEY(project_id) REFERENCES business_projects (project_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(room_id) REFERENCES business_rooms (room_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(seat_id) REFERENCES business_seats (seat_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(person_id) REFERENCES business_persons (person_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "event_id",
+        "sql": "event_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "seat_id",
+        "sql": "seat_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "snapshot",
+        "sql": "snapshot JSONB NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "person_verification_results",
+    "create_sql": "\nCREATE TABLE person_verification_results (\n\tresult_id VARCHAR(36) NOT NULL, \n\tlink_id VARCHAR(36), \n\tperson_id VARCHAR(36), \n\tstatus VARCHAR(16) NOT NULL, \n\tmatched BOOLEAN, \n\tsimilarity FLOAT, \n\tthreshold FLOAT, \n\tchecked_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tperson_name VARCHAR(128) NOT NULL, \n\tproject_name VARCHAR(128), \n\troom_name VARCHAR(128), \n\tmodel VARCHAR(160), \n\treference_version VARCHAR(36) NOT NULL, \n\terror VARCHAR(512), \n\tPRIMARY KEY (result_id), \n\tCONSTRAINT person_verification_result_status CHECK (status IN ('matched', 'unmatched', 'invalid')), \n\tFOREIGN KEY(link_id) REFERENCES person_verification_links (link_id) ON DELETE SET NULL, \n\tFOREIGN KEY(person_id) REFERENCES business_persons (person_id) ON DELETE SET NULL\n)\n\n",
+    "columns": [
+      {
+        "name": "result_id",
+        "sql": "result_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "link_id",
+        "sql": "link_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "matched",
+        "sql": "matched BOOLEAN",
+        "safe_add": true
+      },
+      {
+        "name": "similarity",
+        "sql": "similarity FLOAT",
+        "safe_add": true
+      },
+      {
+        "name": "threshold",
+        "sql": "threshold FLOAT",
+        "safe_add": true
+      },
+      {
+        "name": "checked_at",
+        "sql": "checked_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "person_name",
+        "sql": "person_name VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_name",
+        "sql": "project_name VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "room_name",
+        "sql": "room_name VARCHAR(128)",
+        "safe_add": true
+      },
+      {
+        "name": "model",
+        "sql": "model VARCHAR(160)",
+        "safe_add": true
+      },
+      {
+        "name": "reference_version",
+        "sql": "reference_version VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "error",
+        "sql": "error VARCHAR(512)",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_person_verification_results_link_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_person_verification_results_link_id ON person_verification_results (link_id)"
+      },
+      {
+        "name": "ix_person_verification_results_person_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_person_verification_results_person_id ON person_verification_results (person_id)"
+      }
+    ]
+  },
+  {
+    "name": "phase_snapshots",
+    "create_sql": "\nCREATE TABLE phase_snapshots (\n\tstage_snapshot_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(256) NOT NULL, \n\tphase_id VARCHAR(32) NOT NULL, \n\tphase_version INTEGER NOT NULL, \n\teffective_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tenabled_scenes JSONB NOT NULL, \n\talways_on_scenes JSONB NOT NULL, \n\tassets JSONB NOT NULL, \n\trule_versions JSONB NOT NULL, \n\texceptions JSONB NOT NULL, \n\tsync_status VARCHAR(32) NOT NULL, \n\tactor_id VARCHAR(128) NOT NULL, \n\treason VARCHAR(1024) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (stage_snapshot_id), \n\tCONSTRAINT phase_snapshot_binding_scope FOREIGN KEY(session_id, project_id, room_id, source_id) REFERENCES phase_bindings (session_id, project_id, room_id, source_id) ON DELETE RESTRICT, \n\tCONSTRAINT phase_snapshot_session_version UNIQUE (session_id, phase_version), \n\tCONSTRAINT phase_snapshot_session_effective UNIQUE (session_id, effective_at), \n\tCONSTRAINT phase_snapshot_version_positive CHECK (phase_version > 0), \n\tCONSTRAINT phase_snapshot_sync_status CHECK (sync_status IN ('pending','partially_applied','applied','missing_asset','failed')), \n\tCONSTRAINT phase_snapshot_s10_always_on CHECK (always_on_scenes = '[\"S10\"]'::jsonb), \n\tCONSTRAINT phase_snapshot_known_phase CHECK (phase_id IN ('SIGNIN','DISCIPLINE','PRELIM','DETAIL','CLARIFY','REPORT')), \n\tCONSTRAINT phase_snapshot_actor_text CHECK (length(btrim(actor_id)) > 0), \n\tCONSTRAINT phase_snapshot_reason_text CHECK (length(btrim(reason)) > 0)\n)\n\n",
+    "columns": [
+      {
+        "name": "stage_snapshot_id",
+        "sql": "stage_snapshot_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "phase_id",
+        "sql": "phase_id VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "phase_version",
+        "sql": "phase_version INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "effective_at",
+        "sql": "effective_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "enabled_scenes",
+        "sql": "enabled_scenes JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "always_on_scenes",
+        "sql": "always_on_scenes JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "assets",
+        "sql": "assets JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "rule_versions",
+        "sql": "rule_versions JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "exceptions",
+        "sql": "exceptions JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "sync_status",
+        "sql": "sync_status VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor_id",
+        "sql": "actor_id VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "reason",
+        "sql": "reason VARCHAR(1024) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_phase_snapshots_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_phase_snapshots_session_id ON phase_snapshots (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "business_authorization_entries",
+    "create_sql": "\nCREATE TABLE business_authorization_entries (\n\tentry_id VARCHAR(36) NOT NULL, \n\tsnapshot_id VARCHAR(36) NOT NULL, \n\tperson_id VARCHAR(36) NOT NULL, \n\tseat_id VARCHAR(36), \n\trole VARCHAR(16) NOT NULL, \n\tidentity_verified BOOLEAN NOT NULL, \n\tverification_result_id VARCHAR(36), \n\tbasis_fact_id VARCHAR(36), \n\trecipient_authorized BOOLEAN NOT NULL, \n\tgrant_fact_id VARCHAR(36), \n\tPRIMARY KEY (entry_id), \n\tCONSTRAINT business_authz_entry_unique UNIQUE (snapshot_id, person_id), \n\tCONSTRAINT business_authz_entry_role CHECK (role IN ('expert', 'supervisor', 'staff', 'owner', 'agent', 'bidder')), \n\tFOREIGN KEY(snapshot_id) REFERENCES business_authorization_snapshots (snapshot_id) ON DELETE CASCADE, \n\tFOREIGN KEY(person_id) REFERENCES business_persons (person_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(seat_id) REFERENCES business_seats (seat_id) ON DELETE SET NULL, \n\tFOREIGN KEY(verification_result_id) REFERENCES person_verification_results (result_id) ON DELETE SET NULL, \n\tFOREIGN KEY(basis_fact_id) REFERENCES business_attendance_facts (fact_id) ON DELETE SET NULL, \n\tFOREIGN KEY(grant_fact_id) REFERENCES business_attendance_facts (fact_id) ON DELETE SET NULL\n)\n\n",
+    "columns": [
+      {
+        "name": "entry_id",
+        "sql": "entry_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "snapshot_id",
+        "sql": "snapshot_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "person_id",
+        "sql": "person_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "seat_id",
+        "sql": "seat_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "role",
+        "sql": "role VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "identity_verified",
+        "sql": "identity_verified BOOLEAN NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "verification_result_id",
+        "sql": "verification_result_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "basis_fact_id",
+        "sql": "basis_fact_id VARCHAR(36)",
+        "safe_add": true
+      },
+      {
+        "name": "recipient_authorized",
+        "sql": "recipient_authorized BOOLEAN NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "grant_fact_id",
+        "sql": "grant_fact_id VARCHAR(36)",
+        "safe_add": true
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_business_authorization_entries_snapshot_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_business_authorization_entries_snapshot_id ON business_authorization_entries (snapshot_id)"
+      }
+    ]
+  },
+  {
+    "name": "business_fact_verifications",
+    "create_sql": "\nCREATE TABLE business_fact_verifications (\n\tlink_id VARCHAR(36) NOT NULL, \n\tfact_id VARCHAR(36) NOT NULL, \n\tresult_id VARCHAR(36) NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (link_id), \n\tUNIQUE (fact_id), \n\tFOREIGN KEY(fact_id) REFERENCES business_attendance_facts (fact_id) ON DELETE CASCADE, \n\tFOREIGN KEY(result_id) REFERENCES person_verification_results (result_id) ON DELETE RESTRICT\n)\n\n",
+    "columns": [
+      {
+        "name": "link_id",
+        "sql": "link_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "fact_id",
+        "sql": "fact_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "result_id",
+        "sql": "result_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "actor",
+        "sql": "actor VARCHAR(64) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": []
+  },
+  {
+    "name": "phase_control_acks",
+    "create_sql": "\nCREATE TABLE phase_control_acks (\n\tid SERIAL NOT NULL, \n\tstage_snapshot_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(256) NOT NULL, \n\tphase_id VARCHAR(32) NOT NULL, \n\tphase_version INTEGER NOT NULL, \n\tconsumer_id VARCHAR(128) NOT NULL, \n\treceived_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tapplied_at TIMESTAMP WITH TIME ZONE, \n\tstatus VARCHAR(16) NOT NULL, \n\terror JSONB, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT phase_ack_snapshot_consumer UNIQUE (stage_snapshot_id, consumer_id), \n\tCONSTRAINT phase_ack_status CHECK (status IN ('applied','missing_asset','failed')), \n\tCONSTRAINT phase_ack_state_consistent CHECK ((status = 'applied' AND applied_at IS NOT NULL AND error IS NULL AND applied_at >= received_at) OR (status <> 'applied' AND applied_at IS NULL AND error IS NOT NULL)), \n\tFOREIGN KEY(stage_snapshot_id) REFERENCES phase_snapshots (stage_snapshot_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "id",
+        "sql": "id SERIAL NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "stage_snapshot_id",
+        "sql": "stage_snapshot_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "phase_id",
+        "sql": "phase_id VARCHAR(32) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "phase_version",
+        "sql": "phase_version INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "consumer_id",
+        "sql": "consumer_id VARCHAR(128) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "received_at",
+        "sql": "received_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "applied_at",
+        "sql": "applied_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "status",
+        "sql": "status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "error",
+        "sql": "error JSONB",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_phase_control_acks_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_phase_control_acks_session_id ON phase_control_acks (session_id)"
+      }
+    ]
+  },
+  {
+    "name": "phase_control_outbox",
+    "create_sql": "\nCREATE TABLE phase_control_outbox (\n\tnotification_id VARCHAR(36) NOT NULL, \n\tstage_snapshot_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tproject_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tsource_id VARCHAR(256) NOT NULL, \n\tphase_version INTEGER NOT NULL, \n\trequired_consumers JSONB NOT NULL, \n\tdelivery_status VARCHAR(16) NOT NULL, \n\tattempts INTEGER NOT NULL, \n\tlast_attempt_at TIMESTAMP WITH TIME ZONE, \n\tnext_attempt_at TIMESTAMP WITH TIME ZONE, \n\tpublished_at TIMESTAMP WITH TIME ZONE, \n\tlast_error_code VARCHAR(64), \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tPRIMARY KEY (notification_id), \n\tCONSTRAINT phase_outbox_delivery_status CHECK (delivery_status IN ('pending','published')), \n\tCONSTRAINT phase_outbox_attempts_positive CHECK (attempts >= 0), \n\tCONSTRAINT phase_outbox_required_consumers CHECK (jsonb_typeof(required_consumers) = 'array' AND jsonb_array_length(required_consumers) > 0), \n\tUNIQUE (stage_snapshot_id), \n\tFOREIGN KEY(stage_snapshot_id) REFERENCES phase_snapshots (stage_snapshot_id) ON DELETE CASCADE\n)\n\n",
+    "columns": [
+      {
+        "name": "notification_id",
+        "sql": "notification_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "stage_snapshot_id",
+        "sql": "stage_snapshot_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "session_id",
+        "sql": "session_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "project_id",
+        "sql": "project_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "room_id",
+        "sql": "room_id VARCHAR(36) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "source_id",
+        "sql": "source_id VARCHAR(256) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "phase_version",
+        "sql": "phase_version INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "required_consumers",
+        "sql": "required_consumers JSONB NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "delivery_status",
+        "sql": "delivery_status VARCHAR(16) NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "attempts",
+        "sql": "attempts INTEGER NOT NULL",
+        "safe_add": false
+      },
+      {
+        "name": "last_attempt_at",
+        "sql": "last_attempt_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "next_attempt_at",
+        "sql": "next_attempt_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "published_at",
+        "sql": "published_at TIMESTAMP WITH TIME ZONE",
+        "safe_add": true
+      },
+      {
+        "name": "last_error_code",
+        "sql": "last_error_code VARCHAR(64)",
+        "safe_add": true
+      },
+      {
+        "name": "created_at",
+        "sql": "created_at TIMESTAMP WITH TIME ZONE NOT NULL",
+        "safe_add": false
+      }
+    ],
+    "indexes": [
+      {
+        "name": "ix_phase_control_outbox_next_attempt_at",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_phase_control_outbox_next_attempt_at ON phase_control_outbox (next_attempt_at)"
+      },
+      {
+        "name": "ix_phase_control_outbox_session_id",
+        "sql": "CREATE INDEX IF NOT EXISTS ix_phase_control_outbox_session_id ON phase_control_outbox (session_id)"
+      }
+    ]
+  }
+]

@@ -1,0 +1,7 @@
+# Compatibility test image; build from repository root.
+FROM poc-api:latest
+COPY requirements/dev.lock /tmp/dev.lock
+RUN pip install --no-cache-dir -r /tmp/dev.lock
+COPY services/api/tests /tests
+ENV PYTHONPATH=/app:/tests
+CMD ["python", "-m", "pytest", "-q", "/tests/test_poc_workflow.py"]

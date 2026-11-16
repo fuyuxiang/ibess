@@ -1,0 +1,153 @@
+.audio-transcript-panel { min-width: 0; width: 100%; color: #476b89; display: flex; flex-direction: column; gap: 16px; }
+.audio-transcript-panel .at-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.audio-transcript-panel .at-panel-heading h2 { color: #194779; margin: 0; display: flex; align-items: center; gap: 9px; font-size: 19px; font-weight: 600; }
+.audio-transcript-panel .at-panel-heading .anticon { color: #1677ff; }
+.audio-transcript-panel .at-panel-heading p { color: #859bad; font-size: 12px; margin: 7px 0 0; line-height: 1.8; }
+.audio-transcript-panel .ant-card { border: 1px solid #e0eaf4; border-radius: 8px; background: white; box-shadow: 0 3px 12px rgba(42,87,130,.04); min-width: 0; }
+.audio-transcript-panel .ant-card-head { min-height: 52px; padding: 0 18px; color: #24577f; font-size: 15px; border-bottom-color: #edf2f7; }
+.audio-transcript-panel .ant-card-extra { color: #8da2b4; font-size: 12px; }
+.audio-transcript-panel .ant-card-body { padding: 18px; }
+.audio-transcript-panel .at-upload-content { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.audio-transcript-panel .at-upload-content strong { font-size: 14px; color: #315f85; }
+.audio-transcript-panel .at-upload-content p { font-size: 12px; color: #8da1b3; margin: 7px 0 0; line-height: 1.8; }
+.audio-transcript-panel .at-file-button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; border: 1px solid #d1dfec; border-radius: 6px; padding: 4px 12px; color: #4e7393; background: #fff; font-size: 13px; position: relative; overflow: hidden; cursor: pointer; }
+.audio-transcript-panel .at-file-button input { position: absolute; inset: 0; height: 100%; width: 100%; opacity: 0; cursor: pointer; }
+.audio-transcript-panel .at-file-button:focus-within { outline: 2px solid #91caff; outline-offset: 2px; }
+.audio-transcript-panel .at-file-button.is-disabled { color: #afbbc6; background: #f5f7fa; cursor: not-allowed; }
+.audio-transcript-panel .at-file-name { font-size: 12px; color: #6285a2; margin: 12px 0 0; overflow-wrap: anywhere; }
+.audio-transcript-panel .at-work-grid { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); align-items: start; gap: 16px; }
+.audio-transcript-panel .at-recording-list { display: flex; flex-direction: column; gap: 8px; max-height: 640px; overflow-y: auto; }
+.audio-transcript-panel .at-recording-choice { width: 100%; padding: 12px; text-align: left; border: 1px solid #e5edf5; border-radius: 7px; background: white; cursor: pointer; color: #7693aa; }
+.audio-transcript-panel .at-recording-choice:hover { border-color: #9ec8ee; background: #fafcff; }
+.audio-transcript-panel .at-recording-choice.is-active { border-color: #75b3ec; background: #f0f7ff; }
+.audio-transcript-panel .at-recording-choice > div { display: flex; align-items: start; gap: 8px; justify-content: space-between; }
+.audio-transcript-panel .at-recording-choice strong { color: #3b6b91; font-size: 12px; font-weight: 500; line-height: 1.7; overflow-wrap: anywhere; }
+.audio-transcript-panel .at-recording-choice .ant-tag { margin: 0; font-size: 10px; flex-shrink: 0; }
+.audio-transcript-panel .at-recording-choice > span { display: block; color: #97acbc; font-size: 10px; margin-top: 8px; }
+.audio-transcript-panel .at-recording-choice small { display: block; color: #84a0b5; font-size: 11px; margin-top: 5px; }
+.audio-transcript-panel .at-note { color: #8da1b2; font-size: 12px; line-height: 1.8; margin: 12px 0 0; }
+.audio-transcript-panel .at-spaced { margin-top: 16px; }
+.audio-transcript-panel .at-detail-heading { display: flex; gap: 18px; justify-content: space-between; align-items: start; }
+.audio-transcript-panel .at-detail-heading h3 { font-size: 19px; color: #245b83; margin: 0 0 6px; overflow-wrap: anywhere; }
+.audio-transcript-panel .at-detail-heading span:not(.ant-tag) { font-size: 11px; color: #94a7b6; }
+.audio-transcript-panel .at-recording-metrics { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; padding: 18px 0; }
+.audio-transcript-panel .at-recording-metrics span { display: block; color: #95a8b8; font-size: 11px; }
+.audio-transcript-panel .at-recording-metrics b { display: block; color: #3e739c; font-size: 16px; font-weight: 500; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.audio-transcript-panel .at-player-card { border: 1px solid #e0eaf5; background: #f7faff; border-radius: 7px; padding: 14px; }
+.audio-transcript-panel .at-player-title { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; color: #6287a8; font-size: 13px; }
+.audio-transcript-panel .at-player-title strong { font-weight: 500; flex: 1; min-width: 140px; }
+.audio-transcript-panel .at-player-title .anticon { color: #388ad2; }
+.audio-transcript-panel .at-player-card audio { display: block; width: 100%; height: 40px; margin: 14px 0 0; }
+.audio-transcript-panel .at-player-card .ant-alert { margin-top: 12px; }
+.audio-transcript-panel .at-segment-title { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 22px; }
+.audio-transcript-panel .at-segment-title h4 { color: #2e648e; font-size: 14px; margin: 0; font-weight: 600; }
+.audio-transcript-panel .at-segment-title h4 small { font-size: 11px; font-weight: 400; color: #9aaebb; margin-left: 9px; }
+.audio-transcript-panel .at-segment-title > span { font-size: 11px; color: #9aaebb; }
+.audio-transcript-panel .at-segment-list { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; max-height: 560px; overflow-y: auto; padding-bottom: 8px; }
+.audio-transcript-panel .at-segment-row { position: relative; border: 1px solid #e5edf6; border-radius: 7px; padding: 14px; background: #fff; }
+.audio-transcript-panel .at-segment-row.is-selected { border-color: #93c3f0; background: #f7fbff; }
+.audio-transcript-panel .at-segment-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.audio-transcript-panel .at-segment-meta .ant-tag { margin: 0; }
+.audio-transcript-panel .at-segment-meta > span:not(.ant-tag) { color: #95a9ba; font-size: 11px; display: flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.audio-transcript-panel .at-segment-row p { font-size: 13px; color: #4e7593; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; margin: 12px 0; }
+.audio-transcript-panel .at-model-meta { border-top: 1px solid #edf2f7; margin: 24px 0 0; padding: 15px 0 0; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px 20px; font-size: 11px; }
+.audio-transcript-panel .at-model-meta > div { display: flex; gap: 10px; min-width: 0; }
+.audio-transcript-panel .at-model-meta dt { flex-shrink: 0; color: #9caebb; }
+.audio-transcript-panel .at-model-meta dd { color: #7393ac; margin: 0; overflow-wrap: anywhere; }
+.audio-transcript-panel .at-list-loading, .audio-transcript-panel .at-detail-loading { padding: 45px; text-align: center; }
+.audio-transcript-panel .at-detail-loading .ant-spin-container > div { height: 60px; }
+.audio-transcript-panel .ant-alert { font-size: 12px; }
+.audio-transcript-panel .ant-alert-description { font-size: 12px; line-height: 1.8; }
+.audio-transcript-panel .ant-empty-description { font-size: 12px; color: #92a7b7; }
+@media (max-width: 900px) {
+  .audio-transcript-panel .at-work-grid { grid-template-columns: minmax(0,1fr); }
+  .audio-transcript-panel .at-recording-list { max-height: 240px; }
+  .audio-transcript-panel .at-upload-content { align-items: flex-start; flex-direction: column; }
+  .audio-transcript-panel .at-model-meta { grid-template-columns: minmax(0,1fr); }
+}
+
+/* ===== 音频页视觉层次增强（2026-10-22） ===== */
+/* 页面分区块：标题—上传—三列工作台，用间距与浅底色分层 */
+.audio-workbench { display: flex; flex-direction: column; gap: 16px; }
+.audio-workbench .workflow-heading { padding-bottom: 6px; border-bottom: 1px solid #e8eef5; }
+.audio-workbench-grid { gap: 18px; align-items: start; }
+
+/* 上传区：虚线框 + 浅底，弱化视觉权重但在首位 */
+.at-panel-heading { letter-spacing: .01em; }
+.at-player-card { background: linear-gradient(180deg, #f8fbff, #f2f6fb); border: 1px solid #e3ebf5; border-radius: 10px; padding: 14px 16px; }
+.at-player-title { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #7891ac; margin-bottom: 8px; }
+
+/* 最近录音列表：选中态左色条 + 浅蓝底，hover 轻抬升 */
+.at-recording-list { display: flex; flex-direction: column; gap: 8px; }
+.at-recording-choice { position: relative; border-radius: 8px; padding: 10px 12px 10px 14px !important; background: #fff; border: 1px solid #e6ecf3; transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease; }
+.at-recording-choice:hover { border-color: #9cc6f2; box-shadow: 0 2px 8px rgba(31, 76, 130, .08); transform: translateY(-1px); }
+.at-recording-choice[aria-pressed="true"], .at-recording-choice.selected { border-color: #4ea1ff; background: #eff6ff; }
+.at-recording-choice[aria-pressed="true"]::before, .at-recording-choice.selected::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: #4ea1ff; box-shadow: 0 0 8px rgba(78, 161, 255, .8); }
+
+/* 指标行：三块浅底小卡，弱化数字噪声 */
+.at-recording-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 0 14px; }
+.at-recording-metrics > * { background: #f7f9fc; border: 1px solid #e6ecf3; border-radius: 8px; padding: 10px 12px; }
+
+/* 转写片段：说话人色条 + hover 描边 + 时间弱化 */
+.at-segment-list { display: flex; flex-direction: column; gap: 10px; }
+.at-segment-list > * { position: relative; border-radius: 10px; padding: 12px 14px 12px 16px !important; background: #fff; border: 1px solid #e6ecf3; transition: border-color .12s ease, box-shadow .12s ease; }
+.at-segment-list > *:hover { border-color: #9cc6f2; box-shadow: 0 2px 8px rgba(31, 76, 130, .07); }
+.at-segment-list > *::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 3px; background: #4ea1ff; opacity: .8; }
+.at-segment-list > *:nth-child(even)::before { background: #ff8f40; }
+
+/* 语义研判卡：与录音区拉开层次 */
+.semantic-review-card { border: 1px solid #e3ebf5 !important; box-shadow: 0 2px 10px rgba(31, 76, 130, .06); }
+.semantic-review-list { display: flex; flex-direction: column; gap: 10px; }
+.semantic-review-row { background: #fff; border: 1px solid #e6ecf3; border-radius: 10px; padding: 12px 14px; transition: border-color .12s ease; }
+.semantic-review-row:hover { border-color: #9cc6f2; }
+.semantic-review-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.semantic-review-reason { color: #33475c; margin: 6px 0; line-height: 1.6; }
+
+/* 演示来源列表按钮：统一为轻量选择项 */
+.audio-source-list { display: flex; flex-direction: column; gap: 6px; }
+.audio-source-list > button { text-align: left; border-radius: 8px; padding: 8px 12px; background: #fff; border: 1px solid #e6ecf3; color: #33475c; transition: all .12s ease; }
+.audio-source-list > button:hover { border-color: #9cc6f2; background: #f7f9fc; }
+.audio-source-list > button.selected { border-color: #4ea1ff; background: #eff6ff; color: #1f4c82; }
+
+/* 面板头部：轻量说明行（页面标题已由 WorkflowHeading 承担） */
+.at-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.at-heading-note { margin: 0; color: #7891ac; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.at-panel-heading .ant-btn { flex-shrink: 0; }
+
+/* 音频页两列化：录入卡移除后来源列与主列均衡 */
+.audio-workbench-grid { grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) !important; }
+
+/* 转写片段空挡修复：转写文本不保留源换行，压缩段内间距 */
+.audio-transcript-panel .at-segment-row p { white-space: normal; margin: 8px 0 6px; line-height: 1.7; }
+.audio-transcript-panel .at-segment-row .at-segment-meta { margin-bottom: 2px; }
+
+/* 片段卡进一步收紧（用户反馈空挡） */
+.audio-transcript-panel .at-segment-row { padding: 8px 12px 8px 14px !important; }
+.audio-transcript-panel .at-segment-row p { margin: 4px 0 4px; line-height: 1.5; font-size: 12.5px; }
+.audio-transcript-panel .at-segment-row .ant-btn { height: 24px; padding: 0 10px; font-size: 12px; }
+
+
+/* ===== 音频页布局：等高双卡 + 各自内部滚动 ===== */
+.audio-workbench-grid { align-items: stretch; }
+.audio-workbench .audio-source-column { display: flex; flex-direction: column; }
+.audio-workbench .audio-source-column > .ant-card { flex: 1; display: flex; flex-direction: column; }
+.audio-workbench .audio-source-column .ant-card-body { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+@media (max-width: 1000px) {
+  .audio-workbench-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .at-work-grid { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* 事件记录卡按内容自然高度（不被网格拉伸出空白） */
+.audio-workbench .audio-media-column { align-self: start; }
+
+/* 录音采集区并入左列卡：上传区紧凑化，作为列表的头部 */
+.at-upload-inline { border: 1px dashed #c8d7e8; border-radius: 8px; background: #f8fbff; padding: 10px 12px; margin-bottom: 12px; }
+.at-upload-inline .at-upload-content { gap: 10px; }
+.at-upload-inline strong { font-size: 12.5px; }
+.at-upload-inline p { font-size: 11px; color: #7891ac; margin: 4px 0 0; }
+
+/* 录音采集区并入左列卡：上传区紧凑化，作为列表的头部 */
+.at-upload-inline { border: 1px dashed #c8d7e8; border-radius: 8px; background: #f8fbff; padding: 10px 12px; margin-bottom: 12px; }
+.at-upload-inline .at-upload-content { gap: 10px; }
+.at-upload-inline strong { font-size: 12.5px; }
+.at-upload-inline p { font-size: 11px; color: #7891ac; margin: 4px 0 0; }

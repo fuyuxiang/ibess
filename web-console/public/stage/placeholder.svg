@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">演示画面示意图</title>
+  <desc id="desc">不含真实人员、姓名、地址或拍摄信息的会议室示意图。</desc>
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#102c48"/><stop offset="1" stop-color="#245b79"/></linearGradient></defs>
+  <rect width="960" height="540" fill="url(#bg)"/>
+  <g fill="none" stroke="#9dc5d7" stroke-width="3" opacity=".45">
+    <path d="M110 350V120h740v230M110 350h740M170 120v230M790 120v230"/>
+    <path d="m230 340 90-90h320l90 90zM300 340v60m360-60v60M360 250v-35h60v35m120 0v-35h60v35"/>
+    <rect x="380" y="140" width="200" height="60" rx="5"/>
+  </g>
+  <rect x="270" y="419" width="420" height="64" rx="12" fill="#102b43" opacity=".85"/>
+  <text x="480" y="459" fill="#deedf4" text-anchor="middle" font-family="sans-serif" font-size="24">演示示意图 · 未加载现场素材</text>
+</svg>

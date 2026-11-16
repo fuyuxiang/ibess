@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ibess.local/contracts/v2/control-ack.schema.json",
+  "title": "control-ack",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "project_id",
+    "room_id",
+    "session_id",
+    "source_id",
+    "stage_snapshot_id",
+    "phase_id",
+    "phase_version",
+    "consumer_id",
+    "received_at",
+    "applied_at",
+    "status",
+    "error"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "2.0.0"
+    },
+    "project_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "room_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "session_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "stage_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "phase_id": {
+      "anyOf": [
+        {
+          "enum": [
+            "SIGNIN",
+            "DISCIPLINE",
+            "PRELIM",
+            "DETAIL",
+            "CLARIFY",
+            "OPENING",
+            "ATTENDANCE",
+            "RECUSAL",
+            "PRELIMINARY",
+            "DETAILED",
+            "CLARIFICATION",
+            "SCORING",
+            "REPORT",
+            "OFFLINE_QA"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "phase_version": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "consumer_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "received_at": {
+      "type": "string",
+      "format": "utc"
+    },
+    "applied_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "utc"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "enum": [
+        "applied",
+        "missing_asset",
+        "failed"
+      ]
+    },
+    "error": {
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

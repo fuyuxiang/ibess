@@ -1,0 +1,7 @@
+-r ../../requirements/common.in
+redis
+minio
+opencv-python-headless
+sqlalchemy>=2.0
+psycopg[binary]
+pydantic-settings

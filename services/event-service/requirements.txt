@@ -1,0 +1,5 @@
+-r ../../requirements/common.in
+redis
+sqlalchemy>=2.0
+psycopg[binary]
+pydantic-settings

@@ -1,0 +1,11 @@
+# mediamtx 配置覆盖：只给需要特殊处理的 path 打补丁。
+# 其余参数继续由 compose 里的 MTX_* 环境变量提供（环境变量优先级高于本文件）。
+#
+# cam-ezviz 关录制的原因：萤石云流的时间戳会跳变，录制器检测到 drift 后
+# 会重置并销毁 path，连带把 HLS muxer 和推流会话一起干掉（日志表现为
+# "detected drift between recording duration and absolute time, resetting"
+# 紧跟 "muxer destroyed"，流只活几秒）。这一路本来也不用于回放取证。
+paths:
+  all_others:
+  cam-ezviz:
+    record: no

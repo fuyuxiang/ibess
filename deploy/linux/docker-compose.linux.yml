@@ -1,0 +1,65 @@
+# Linux 服务器部署覆盖文件
+#
+# 用法（在项目根目录执行）：
+#   docker compose -f docker-compose.yml -f deploy/linux/docker-compose.linux.yml up -d
+#
+# 与本机的差别只有三点：
+#   1. 数据卷从"复用本机历史卷(demo_*)"改成服务器自己的命名卷(poc_*)
+#   2. 演示摄像头容器(vw-cam*)默认不启动，需要时加 --profile demo-cams
+#   3. 时区固定为 Asia/Shanghai
+
+services:
+  # 演示摄像头：服务器上没有这些推流，默认不启动
+  vw-cam2:
+    profiles: ["demo-cams"]
+  vw-cam3:
+    profiles: ["demo-cams"]
+  vw-cam6:
+    profiles: ["demo-cams"]
+  vw-cam9:
+    profiles: ["demo-cams"]
+  vw-cam10:
+    profiles: ["demo-cams"]
+
+  postgres:
+    environment:
+      TZ: Asia/Shanghai
+  redis:
+    environment:
+      TZ: Asia/Shanghai
+  api:
+    environment:
+      TZ: Asia/Shanghai
+  event-service:
+    environment:
+      TZ: Asia/Shanghai
+  media-service:
+    environment:
+      TZ: Asia/Shanghai
+  audio-worker:
+    environment:
+      TZ: Asia/Shanghai
+  semantic-worker:
+    environment:
+      TZ: Asia/Shanghai
+  web-console:
+    environment:
+      TZ: Asia/Shanghai
+
+volumes:
+  pgdata:
+    external: false
+    name: poc_pgdata
+  redisdata:
+    external: false
+    name: poc_redisdata
+  miniodata:
+    external: false
+    name: poc_miniodata
+  audio-data:
+    external: false
+    name: poc_audio_data
+  media-recordings:
+    name: poc_media_recordings
+  supervision-evidence:
+    name: poc_supervision_evidence

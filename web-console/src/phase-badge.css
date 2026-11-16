@@ -1,0 +1,10 @@
+.phase-badge { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 30px; color: #475569; font-size: 13px; }
+.phase-badge-title { font-weight: 600; color: #1f2937; }
+.phase-badge-version { color: #64748b; font-variant-numeric: tabular-nums; }
+.phase-badge-state { padding: 3px 9px; border: 1px solid; border-radius: 5px; line-height: 20px; }
+.phase-badge-state--neutral { color: #475569; background: #f8fafc; border-color: #cbd5e1; }
+.phase-badge-state--info { color: #0758a8; background: #eff6ff; border-color: #93c5fd; }
+.phase-badge-state--success { color: #166534; background: #f0fdf4; border-color: #86cba3; }
+.phase-badge-state--warning { color: #854d0e; background: #fffbeb; border-color: #e8c26d; }
+.phase-badge-state--danger { color: #b91c1c; background: #fef2f2; border-color: #f4a5a5; }
+.phase-badge-error { color: #b91c1c; overflow-wrap: anywhere; }

@@ -1,0 +1,85 @@
+body:has(.person-verification-page), html:has(.person-verification-page), body:has(.person-verification-page) #root { min-width: 0 !important; width: 100%; }
+.person-verification-page { min-height: 100vh; width: 100%; min-width: 0; box-sizing: border-box; background: #f3f7fc; color: #466782; padding: 30px 24px; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+.person-verification-page *, .person-verification-admin-modal * { box-sizing: border-box; }
+.person-verification-page .pv-page-shell { width: 100%; max-width: 1120px; margin: 0 auto; }
+.person-verification-page .pv-page-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+.person-verification-page .pv-page-header > div { display: flex; align-items: center; gap: 12px; }
+.person-verification-page .pv-brand-icon { display: grid; place-items: center; height: 44px; width: 44px; border-radius: 9px; background: #1677ff; color: white; font-size: 24px; }
+.person-verification-page .pv-page-header strong { display: block; font-size: 19px; color: #174475; }
+.person-verification-page .pv-page-header div > span:not(.pv-brand-icon) { display: block; font-size: 12px; color: #8ba1b4; margin-top: 5px; }
+.person-verification-page .ant-card, .person-verification-admin-modal .pv-admin-card { border: 1px solid #e0eaf5; border-radius: 9px; background: white; box-shadow: 0 4px 18px rgba(42,84,128,.04); }
+.person-verification-page .pv-context-card { margin-bottom: 16px; }
+.person-verification-page .pv-context-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.person-verification-page .pv-eyebrow { color: #1677ff; font-size: 11px; letter-spacing: .6px; margin-right: 8px; }
+.person-verification-page h1 { margin: 6px 0; color: #204d78; font-size: 25px; font-weight: 600; }
+.person-verification-page .pv-context-heading p { font-size: 12px; margin: 0; color: #8a9fb1; overflow-wrap: anywhere; }
+.person-verification-page .pv-bound-context { display: flex; flex-wrap: wrap; gap: 16px 36px; margin-top: 22px; padding-top: 17px; border-top: 1px solid #edf2f7; font-size: 13px; color: #8a9fb0; }
+.person-verification-page .pv-bound-context b { font-weight: 500; color: #4e7595; }
+.person-verification-page .pv-context-bottom { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 16px; font-size: 12px; color: #7691a9; }
+.person-verification-page .pv-work-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.person-verification-page .pv-work-grid > .ant-card { min-width: 0; }
+.person-verification-page .ant-card-head { min-height: 55px; color: #235986; font-size: 15px; padding: 0 20px; border-bottom-color: #edf2f7; }
+.person-verification-page .ant-card-body { padding: 22px; }
+.person-verification-page .pv-photo-stage { height: 300px; display: grid; place-items: center; background: #f5f8fc; border: 1px dashed #d6e3ef; border-radius: 7px; overflow: hidden; }
+.person-verification-page .pv-photo-stage img, .person-verification-page .pv-photo-stage video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.person-verification-page .pv-photo-stage video { background: #183146; }
+.person-verification-page .pv-photo-stage .ant-empty-image { height: 58px; color: #94afc5; font-size: 42px; }
+.person-verification-page .pv-photo-stage .ant-empty-description { color: #91a5b6; font-size: 12px; }
+.person-verification-page .pv-file-name { color: #537b9b; font-size: 12px; overflow-wrap: anywhere; margin: 12px 0 0; }
+.person-verification-page .pv-helper, .person-verification-admin-modal .pv-helper { color: #899eaf; font-size: 12px; line-height: 1.85; margin: 13px 0; overflow-wrap: anywhere; }
+.person-verification-page .pv-alert, .person-verification-admin-modal .pv-alert { margin: 14px 0; font-size: 12px; }
+.person-verification-page .pv-alert .ant-alert-description, .person-verification-admin-modal .pv-alert .ant-alert-description { font-size: 12px; line-height: 1.8; }
+.person-verification-page .pv-upload { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #d5e2ee; border-radius: 6px; color: #4c7294; font-size: 13px; padding: 4px 12px; min-height: 32px; background: white; position: relative; overflow: hidden; cursor: pointer; }
+.person-verification-page .pv-upload input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.person-verification-page .pv-upload:focus-within { outline: 2px solid #91caff; outline-offset: 2px; }
+.person-verification-page .pv-upload.is-disabled { color: #afbdc8; background: #f6f8fb; border-color: #e1e7ee; cursor: not-allowed; }
+.person-verification-page .pv-submit { margin-top: 24px; }
+.person-verification-page .pv-result-empty { display: flex; flex-direction: column; align-items: center; gap: 13px; padding: 42px 12px; color: #92a8b9; text-align: center; }
+.person-verification-page .pv-result-empty .anticon { color: #7aa4c7; font-size: 42px; }
+.person-verification-page .pv-result-empty strong { color: #6687a3; font-size: 14px; font-weight: 500; }
+.person-verification-page .pv-result-empty span { font-size: 12px; }
+.person-verification-page .pv-score-row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; padding: 20px 0; }
+.person-verification-page .pv-score-row span { color: #899eaf; font-size: 11px; }
+.person-verification-page .pv-score-row strong { display: block; color: #245f91; font-size: 29px; font-variant-numeric: tabular-nums; margin-top: 7px; }
+.person-verification-page .is-matched .pv-score-row strong:first-child { color: #258b70; }
+.person-verification-page .pv-result-facts { margin: 12px 0; }
+.person-verification-page .pv-result-facts > div { display: grid; grid-template-columns: 90px minmax(0,1fr); gap: 10px; padding: 11px 0; border-bottom: 1px solid #edf2f7; font-size: 12px; }
+.person-verification-page .pv-result-facts dt { color: #8aa0b3; }
+.person-verification-page .pv-result-facts dd { margin: 0; color: #527a9b; overflow-wrap: anywhere; }
+.person-verification-page .pv-limit-note { margin-top: 22px; border-top: 1px solid #e7eef6; padding-top: 18px; font-size: 12px; color: #91a3b2; }
+.person-verification-page .pv-limit-note b { color: #6789a5; font-weight: 500; }
+.person-verification-page .pv-limit-note p { margin: 8px 0 0; line-height: 1.9; }
+.person-verification-page .pv-page-footer { text-align: center; color: #98adbd; font-size: 11px; line-height: 1.8; margin: 24px 0 0; }
+.person-verification-page .pv-no-entry { padding: 45px 15px; text-align: center; }
+.person-verification-page .pv-no-entry .anticon { color: #88a9c8; font-size: 42px; }
+.person-verification-page .pv-no-entry h1 { font-size: 22px; margin: 20px 0 15px; }
+.person-verification-page .pv-no-entry p { color: #8ca1b2; font-size: 13px; }
+.person-verification-admin-modal .ant-modal-title { font-size: 18px; color: #174474; }
+.person-verification-admin-modal .pv-admin-session { display: flex; flex-direction: column; gap: 16px; color: #4a708e; padding-top: 15px; }
+.person-verification-admin-modal .pv-admin-person { display: flex; gap: 12px; align-items: center; background: #f4f8fd; padding: 15px; border-radius: 7px; }
+.person-verification-admin-modal .pv-admin-person > .anticon { color: #1677ff; font-size: 24px; }
+.person-verification-admin-modal .pv-admin-person > div { flex: 1; min-width: 0; }
+.person-verification-admin-modal .pv-admin-person strong { display: block; color: #2f5d82; font-size: 16px; }
+.person-verification-admin-modal .pv-admin-person span { color: #8ba1b3; font-size: 12px; overflow-wrap: anywhere; }
+.person-verification-admin-modal .pv-admin-card .ant-card-head { color: #275d85; font-size: 14px; min-height: 50px; }
+.person-verification-admin-modal .pv-admin-card .ant-card-body { padding: 18px; }
+.person-verification-admin-modal .pv-admin-form { display: grid; grid-template-columns: 1.4fr 1.4fr 1fr; gap: 15px; }
+.person-verification-admin-modal .pv-admin-form label { display: block; color: #6988a1; font-size: 12px; margin-bottom: 8px; }
+.person-verification-admin-modal .pv-admin-form .ant-select { width: 100%; }
+.person-verification-admin-modal .pv-fresh-link { display: flex; flex-direction: column; gap: 13px; margin-top: 18px; padding-top: 17px; border-top: 1px solid #e7eef7; }
+.person-verification-admin-modal .pv-fresh-link .ant-input { font-family: Consolas, monospace; font-size: 12px; }
+.person-verification-admin-modal .ant-table { font-size: 12px; }
+.person-verification-admin-modal .ant-table-cell { overflow-wrap: anywhere; }
+.person-verification-admin-modal .ant-table-thead > tr > th { color: #6d88a1; background: #f5f8fc; font-weight: 500; }
+.person-verification-admin-modal .pv-admin-times { display: flex; flex-direction: column; gap: 5px; }
+.person-verification-admin-modal .pv-admin-times small { color: #93a6b5; }
+@media (max-width: 800px) {
+  .person-verification-page { padding: 20px 12px; }
+  .person-verification-page .pv-work-grid { grid-template-columns: minmax(0,1fr); }
+  .person-verification-page .pv-context-heading { align-items: flex-start; flex-direction: column; }
+  .person-verification-page .pv-photo-stage { height: 260px; }
+  .person-verification-admin-modal .pv-admin-form { grid-template-columns: minmax(0,1fr); }
+}
+
+/* 人脸核验工作台占位 */
+.face-verify-placeholder { display: flex; align-items: center; justify-content: center; min-height: 180px; margin-top: 10px; border: 1px dashed #c8d7e8; border-radius: 8px; background: #f8fbff; color: #8aa0b2; font-size: 12px; }

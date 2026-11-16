@@ -1,0 +1,2 @@
+# Unified locked test environment; install the common package as documented.
+-r ../../requirements/dev.lock

@@ -1,0 +1,478 @@
+{
+  "policy": "Shared PostgreSQL, single DDL owner. Changes require a versioned API migration. Read access is documented separately.",
+  "tables": {
+    "admin_accounts": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "admin_audit": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "audio_recordings": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "audio-worker"
+      ]
+    },
+    "business_persons": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_projects": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_registry_bootstrap": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "clue_processing": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "decisions": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "demo_event_meta": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "demo_reminder_assets": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "eval_sessions": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "events": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "evidence_video_assets": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "evidences": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service",
+        "media-service"
+      ]
+    },
+    "face_verify_config": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "observation_receipts": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "offline_qa_runs": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "operator_audit": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "operator_bindings": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "operators": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "persons": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "reminder_attempts": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "reminder_executions": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "risk_clues": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "seats": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "sensitive_lexicon": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "sensitive_words": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "skills": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_operator_receipts": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "supervision_signals": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "supervision_team_accounts": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "workflow_audit": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "workflow_requests": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "zones": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "admin_sessions": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "audio_segments": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "audio-worker"
+      ]
+    },
+    "business_face_profiles": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_participants": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_rooms": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "offline_qa_jobs": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "offline-worker"
+      ]
+    },
+    "recording_capture_times": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "semantic_analyses": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "semantic-worker"
+      ]
+    },
+    "stage_assets": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "stage_media_bindings": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_archives": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_audio_links": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_cases": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_channels": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_coverage_samples": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_event_spans": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "supervision_evidence_annotations": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_evidence_windows": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_media_holds": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "supervision_occurrences": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "supervision_operations": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_session_reports": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_task_receipts": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_team_sessions": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_authorization_snapshots": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_score_records": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_seats": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "media_bindings": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "person_verification_links": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "phase_bindings": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "semantic_business_snapshots": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "semantic_event_links": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "source_zone_configs": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_intake_failures": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_attendance_facts": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_event_contexts": {
+      "schema_owner": "api",
+      "writers": [
+        "api",
+        "event-service"
+      ]
+    },
+    "person_verification_results": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "phase_snapshots": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_authorization_entries": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "business_fact_verifications": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "phase_control_acks": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "phase_control_outbox": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    }
+  }
+}

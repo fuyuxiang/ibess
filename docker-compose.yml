@@ -1,0 +1,582 @@
+# 智能评标现场视频监测 POC — 单机部署（单路视频）
+# 基础设施服务 + 应用服务，一条命令启动
+
+name: poc
+
+x-vision-core-environment: &vision-core-environment
+  A_EXT_ENABLED: ${A_EXT_ENABLED:-1}
+  # 基础工位离席与新动作规则已接管；避免同一行为重复生成弱线索。
+  A_S03_SEAT_ENABLED: ${A_S03_SEAT_ENABLED:-0}
+  A_S05_ENABLED: ${A_S05_ENABLED:-0}
+  CORE_BEHAVIORS_ENABLED: ${CORE_BEHAVIORS_ENABLED:-1}
+  LATEST_FRAME_CAPTURE: ${LATEST_FRAME_CAPTURE:-1}
+  CORE_REVIEW_INTERVAL: ${CORE_REVIEW_INTERVAL:-4}
+  VISUAL_MODEL_BASE_URL: ${VISUAL_MODEL_BASE_URL:-${SEMANTIC_MODEL_BASE_URL:-https://api.minimax.cn/v1}}
+  VISUAL_MODEL_NAME: ${VISUAL_MODEL_NAME:-${VLM_MODEL:-MiniMax-M3.1-Flash}}
+  VISUAL_MODEL_API_KEY: ${VISUAL_MODEL_API_KEY:-${SEMANTIC_MODEL_API_KEY:-}}
+  FACE_MODEL_DIR: /face-models
+
+services:
+  # ---------- 基础设施 ----------
+  postgres:
+    image: postgres:16-alpine
+    container_name: poc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-demo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-demo}
+    ports:
+      - "${POC_PG_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-demo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: poc-redis
+    restart: unless-stopped
+    ports:
+      - "${POC_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: poc-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+    ports:
+      - "${POC_MINIO_PORT:-9000}:9000"
+      - "${POC_MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: poc-mediamtx
+    environment:
+      MTX_API: "yes"
+      MTX_HLSVARIANT: "lowLatency"
+      MTX_HLSPARTDURATION: "200ms"
+      MTX_HLSSEGMENTDURATION: "1s"
+      MTX_HLSSEGMENTCOUNT: "7"
+      MTX_HLSALWAYSREMUX: "yes"
+      MTX_PATHDEFAULTS_RECORD: "yes"
+      MTX_RECORDPATH: /recordings/%path/%Y-%m-%d/%H-%M-%S-%s
+      MTX_RECORDFORMAT: fmp4
+      MTX_RECORDSEGMENTDURATION: 10s
+      MTX_PATHDEFAULTS_RECORDDELETEAFTER: "6h"
+      MTX_READTIMEOUT: "20s"
+      MTX_WRITETIMEOUT: "20s"
+    volumes:
+      - media-recordings:/recordings
+    ports:
+      - "${POC_RTSP_PORT:-8554}:8554"   # RTSP
+      - "${POC_HLS_PORT:-8888}:8888"   # HLS
+      - "9997:9997"   # API
+    restart: unless-stopped
+
+  # ---------- 应用服务 ----------
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    container_name: poc-api
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-evidence}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      FACE_AUTO_CAMERA: "rtsp://mediamtx:8554/cam10"
+      POC_PHASE_CONTROL_ENABLED: "true"
+      POC_PHASE_CONTROL_REQUIRED_CONSUMERS: '["event-service"]'
+      POC_PHASE_CONTROL_CONSUMERS_FILE: /run/phase-consumers.json
+      RECORDINGS_DIR: /recordings
+      SUPERVISION_EVIDENCE_DIR: /supervision-evidence
+      FACE_MODEL_DIR: /face-models
+      FACE_MATCH_THRESHOLD: ${FACE_MATCH_THRESHOLD:-0.363}
+      AUDIO_DATA_DIR: /audio-data
+      API_STARTUP_TIMEOUT: ${API_STARTUP_TIMEOUT:-120}
+      # 与下面的 ${POC_VIDEO_DIR:-./private_assets/videos} 挂载点保持一致，否则"发起审计"的素材列表为空
+      AUDIT_VIDEO_ROOT: /video-evidence
+    volumes:
+      - ${POC_VIDEO_DIR:-./private_assets/videos}:/video-evidence:ro
+      - ./config/phase-consumers.json:/run/phase-consumers.json:ro
+      - media-recordings:/recordings:ro
+      - supervision-evidence:/supervision-evidence
+      - ./models/face:/face-models:ro
+      - audio-data:/audio-data
+    ports:
+      - "${POC_API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=10).close()"]
+      interval: 5s
+      timeout: 12s
+      retries: 5
+      start_period: 150s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  event-service:
+    build:
+      context: .
+      dockerfile: services/event-service/Dockerfile
+    container_name: poc-event-service
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      REDIS_URL: redis://redis:6379/0
+      POC_PHASE_CONTROL_API: http://api:8000
+      POC_PHASE_CONTROL_TOKEN: ${PHASE_CONTROL_TOKEN_EVENT_SERVICE}
+      POC_PHASE_CONTROL_CONSUMER_ID: event-service
+    depends_on:
+      api:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  media-service:
+    build:
+      context: .
+      dockerfile: services/media-service/Dockerfile
+    container_name: poc-media-service
+    environment:
+      RTSP_URL: ${RTSP_URL:-rtsp://mediamtx:8554/cam1}
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      CACHE_DIR: /cache
+      PRE_SECONDS: ${PRE_SECONDS:-2}
+      POST_SECONDS: ${POST_SECONDS:-2}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-evidence}
+    tmpfs:
+      - /cache
+    depends_on:
+      api:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      mediamtx:
+        condition: service_started
+    restart: unless-stopped
+
+  vision-worker:
+    build:
+      context: .
+      dockerfile: services/vision-worker/Dockerfile
+    container_name: poc-vision-worker
+    environment:
+      <<: *vision-core-environment
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      RTSP_URL: ${RTSP_URL:-rtsp://mediamtx:8554/cam1}
+      YOLO_MODEL: ${YOLO_MODEL:-/assets/yolov8n.pt}
+      YOLO_CONF: ${YOLO_CONF:-0.25}
+      VIDEO_FPS: ${VIDEO_FPS:-5}
+      # 手机类算子默认关；演示"疑似使用手机"需要打开
+      PHONE_SCAN: ${PHONE_SCAN:-1}
+      PHONE_SCAN_INTERVAL: ${PHONE_SCAN_INTERVAL:-2.0}
+      INFERENCE_SIZE: ${INFERENCE_SIZE:-640}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-evidence}
+    volumes:
+      - ./models/face:/face-models:ro
+      - ../dev_assets:/assets:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+# 手机专项机位：整帧里手机只有十几像素，普通检测必漏；这三路按人裁剪再放大检测，专门覆盖 S01 入口携带 / S02 通话 / S08 桌拍。
+
+  vw-cam2:
+    build:
+      context: .
+      dockerfile: services/vision-worker/Dockerfile
+    image: poc-vision-worker:latest
+    container_name: poc-vw-cam2
+    cpus: 1.5
+    environment:
+      <<: *vision-core-environment
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      RTSP_URL: rtsp://mediamtx:8554/cam2
+      CAMERA_ID: camera-002
+      YOLO_MODEL: ${YOLO_MODEL:-/assets/yolov8n.pt}
+      YOLO_CONF: ${YOLO_CONF:-0.25}
+      VIDEO_FPS: 2
+      FRAME_DROP: 6
+      TORCH_THREADS: 1
+      PHONE_SCAN: "1"
+      OFFLINE_SECONDS: 60
+      PHONE_SCAN_INTERVAL: ${PHONE_SCAN_INTERVAL:-2}
+      PHONE_SCAN_IMGSZ: ${PHONE_SCAN_IMGSZ:-640}
+      PHONE_SCAN_CONF: "0.10"
+      PHONE_VOTE_WINDOW: ${PHONE_VOTE_WINDOW:-30}
+      # 入口手机只在一帧里清晰（原片 21 秒仅 14 秒处 conf 0.12），要求两次命中等于永远不报
+      PHONE_VOTE_MIN_HITS: "1"
+      # 入口机位 phone 在 960 画面里太小，大模型一律判"无"，只保留 YOLO+时序投票
+      VLM_REVIEW: "0"
+      VLM_BASE_URL: ${SEMANTIC_MODEL_BASE_URL:-https://api.minimax.cn/v1}
+      VLM_API_KEY: ${SEMANTIC_MODEL_API_KEY:-}
+      VLM_MODEL: ${VLM_MODEL:-MiniMax-M3.1-Flash}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-evidence}
+    volumes:
+      - ./models/face:/face-models:ro
+      - ../dev_assets:/assets:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  vw-cam3:
+    build:
+      context: .
+      dockerfile: services/vision-worker/Dockerfile
+    image: poc-vision-worker:latest
+    container_name: poc-vw-cam3
+    cpus: 1.5
+    environment:
+      <<: *vision-core-environment
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      RTSP_URL: rtsp://mediamtx:8554/cam3
+      CAMERA_ID: camera-003
+      YOLO_MODEL: ${YOLO_MODEL:-/assets/yolov8n.pt}
+      YOLO_CONF: ${YOLO_CONF:-0.25}
+      VIDEO_FPS: 2
+      FRAME_DROP: 6
+      TORCH_THREADS: 1
+      PHONE_SCAN: "1"
+      OFFLINE_SECONDS: 60
+      PHONE_SCAN_INTERVAL: ${PHONE_SCAN_INTERVAL:-2}
+      PHONE_SCAN_IMGSZ: ${PHONE_SCAN_IMGSZ:-640}
+      PHONE_SCAN_CONF: ${PHONE_SCAN_CONF:-0.12}
+      PHONE_VOTE_WINDOW: ${PHONE_VOTE_WINDOW:-30}
+      PHONE_VOTE_MIN_HITS: ${PHONE_VOTE_MIN_HITS:-2}
+      VLM_REVIEW: ${VLM_REVIEW:-1}
+      VLM_BASE_URL: ${SEMANTIC_MODEL_BASE_URL:-https://api.minimax.cn/v1}
+      VLM_API_KEY: ${SEMANTIC_MODEL_API_KEY:-}
+      VLM_MODEL: ${VLM_MODEL:-MiniMax-M3.1-Flash}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-evidence}
+    volumes:
+      - ./models/face:/face-models:ro
+      - ../dev_assets:/assets:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  vw-cam6:
+    build:
+      context: .
+      dockerfile: services/vision-worker/Dockerfile
+    image: poc-vision-worker:latest
+    container_name: poc-vw-cam6
+    cpus: 1.5
+    environment:
+      <<: *vision-core-environment
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      RTSP_URL: rtsp://mediamtx:8554/cam6
+      CAMERA_ID: camera-006
+      YOLO_MODEL: ${YOLO_MODEL:-/assets/yolov8n.pt}
+      YOLO_CONF: ${YOLO_CONF:-0.25}
+      VIDEO_FPS: 2
+      FRAME_DROP: 6
+      TORCH_THREADS: 1
+      PHONE_SCAN: "1"
+      OFFLINE_SECONDS: 60
+      PHONE_SCAN_INTERVAL: ${PHONE_SCAN_INTERVAL:-2}
+      PHONE_SCAN_IMGSZ: ${PHONE_SCAN_IMGSZ:-640}
+      PHONE_SCAN_CONF: "0.10"
+      PHONE_VOTE_WINDOW: ${PHONE_VOTE_WINDOW:-30}
+      # 桌拍动作短、采样稀疏，单次命中 + 大模型复核通过即可报
+      PHONE_VOTE_MIN_HITS: "1"
+      VLM_REVIEW: ${VLM_REVIEW:-1}
+      VLM_BASE_URL: ${SEMANTIC_MODEL_BASE_URL:-https://api.minimax.cn/v1}
+      VLM_API_KEY: ${SEMANTIC_MODEL_API_KEY:-}
+      VLM_MODEL: ${VLM_MODEL:-MiniMax-M3.1-Flash}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-evidence}
+    volumes:
+      - ./models/face:/face-models:ro
+      - ../dev_assets:/assets:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+# 座位离岗 / 区域越界：不做手机扫描，只跑人员与区域判定。
+
+  vw-cam9:
+    build:
+      context: .
+      dockerfile: services/vision-worker/Dockerfile
+    image: poc-vision-worker:latest
+    container_name: poc-vw-cam9
+    cpus: 1.5
+    environment:
+      <<: *vision-core-environment
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      RTSP_URL: rtsp://mediamtx:8554/cam9
+      CAMERA_ID: camera-009
+      YOLO_MODEL: ${YOLO_MODEL:-/assets/yolov8n.pt}
+      YOLO_CONF: ${YOLO_CONF:-0.25}
+      VIDEO_FPS: 2
+      FRAME_DROP: 6
+      TORCH_THREADS: 2
+
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-evidence}
+    volumes:
+      - ./models/face:/face-models:ro
+      - ../dev_assets:/assets:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  vw-cam10:
+    build:
+      context: .
+      dockerfile: services/vision-worker/Dockerfile
+    image: poc-vision-worker:latest
+    container_name: poc-vw-cam10
+    cpus: 1.5
+    environment:
+      <<: *vision-core-environment
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      RTSP_URL: rtsp://mediamtx:8554/cam10
+      CAMERA_ID: camera-010
+      YOLO_MODEL: ${YOLO_MODEL:-/assets/yolov8n.pt}
+      YOLO_CONF: ${YOLO_CONF:-0.25}
+      VIDEO_FPS: 2
+      FRAME_DROP: 6
+      TORCH_THREADS: 2
+
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-evidence}
+    volumes:
+      - ./models/face:/face-models:ro
+      - ../dev_assets:/assets:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 演示信号源：把录像循环推成 RTSP，用于没有真实摄像头的现场演示
+  # 起法：docker compose --profile demo-src up -d
+  demo-cam1:
+    image: poc-media-service:latest
+    container_name: poc-demo-cam1
+    profiles: ["demo-src"]
+    entrypoint: ["ffmpeg"]
+    command: ["-nostdin","-re","-stream_loop","-1","-f","concat","-safe","0","-i","/videos/${POC_VIDEO_PLAYLIST:-playlist.txt}","-c","copy","-f","rtsp","-rtsp_transport","tcp","rtsp://mediamtx:8554/cam1"]
+    volumes:
+      - ${POC_VIDEO_DIR:-./private_assets/videos}:/videos:ro
+    depends_on:
+      - mediamtx
+    restart: unless-stopped
+
+  # 演示拾音：把真实录音循环推成 RTSP，喂给语音链路（转写 → 敏感词 → 事件）
+  demo-cam7:
+    image: poc-media-service:latest
+    container_name: poc-demo-cam7
+    profiles: ["demo-src"]
+    entrypoint: ["ffmpeg"]
+    command: ["-nostdin","-re","-stream_loop","-1","-i","/videos/${POC_DEMO_AUDIO_FILE:-demo-audio.m4a}","-c:a","aac","-ar","16000","-ac","1","-f","rtsp","-rtsp_transport","tcp","rtsp://mediamtx:8554/cam7"]
+    volumes:
+      - ${POC_VIDEO_DIR:-./private_assets/videos}:/videos:ro
+    depends_on:
+      - mediamtx
+    restart: unless-stopped
+
+  demo-cam2:
+    image: poc-media-service:latest
+    container_name: poc-demo-cam2
+    profiles: ["demo-src"]
+    entrypoint: ["ffmpeg"]
+    command: ["-nostdin","-re","-stream_loop","-1","-f","concat","-safe","0","-i","/videos/${POC_VIDEO_PLAYLIST:-playlist.txt}","-c","copy","-f","rtsp","-rtsp_transport","tcp","rtsp://mediamtx:8554/cam2"]
+    volumes:
+      - ${POC_VIDEO_DIR:-./private_assets/videos}:/videos:ro
+    depends_on:
+      - mediamtx
+    restart: unless-stopped
+
+  # 历史视频审计：离线扫录像，产出发现与截图（不做实时）
+  audit-worker:
+    image: poc-vision-worker:latest
+    container_name: poc-audit-worker
+    command: ["python", "-m", "worker.audit"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      VIDEO_DIR: /video-evidence
+      YOLO_MODEL: /assets/yolov8n.pt
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-demo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
+      MINIO_BUCKET: ${MINIO_BUCKET:-evidence}
+      DEVICE: ${DEVICE:-cpu}
+    volumes:
+      - ../dev_assets:/assets:ro
+      - ${POC_VIDEO_DIR:-./private_assets/videos}:/video-evidence:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  audio-worker:
+    build:
+      context: .
+      dockerfile: services/audio-worker/Dockerfile
+    container_name: poc-audio-worker
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      AUDIO_SOURCE: ${AUDIO_SOURCE:-/assets/S09_争吵与推搡_真实录音.wav}
+      AUDIO_STREAM_URL: ${AUDIO_STREAM_URL:-rtsp://mediamtx:8554/cam7}
+      AUDIO_STREAM_CAMERA: ${AUDIO_STREAM_CAMERA:-camera-007}
+      AUDIO_STREAM_CHUNK_SEC: ${AUDIO_STREAM_CHUNK_SEC:-20}
+      AUDIO_CHUNK_MS: ${AUDIO_CHUNK_MS:-500}
+      AUDIO_INTERVAL: ${AUDIO_INTERVAL:-6}
+      SENSITIVE_WORDS: ${SENSITIVE_WORDS:-达摩院}
+      SPEAKER_MERGE_THRESHOLD: ${SPEAKER_MERGE_THRESHOLD:-0.65}
+      # 敏感词命中后交给大模型判是否真违规（正常讨论直接丢弃）
+      SENSITIVE_LLM_REVIEW: ${SENSITIVE_LLM_REVIEW:-1}
+      SEMANTIC_MODEL_BASE_URL: ${SEMANTIC_MODEL_BASE_URL:-https://api.minimax.cn/v1}
+      SEMANTIC_MODEL_NAME: ${SEMANTIC_MODEL_NAME:-MiniMax-M3.1-Flash}
+      SEMANTIC_MODEL_API_KEY: ${SEMANTIC_MODEL_API_KEY:-}
+      AUDIO_DATA_DIR: /audio-data
+      # 共享 GPU 机器默认走 CPU，避免抢显存；独占机器改 cuda
+      AUDIO_DEVICE: ${AUDIO_DEVICE:-cpu}
+    volumes:
+      - ../dev_assets:/assets:ro
+      - ../models_cache:/root/.cache
+      - audio-data:/audio-data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  semantic-worker:
+    build:
+      context: .
+      dockerfile: services/semantic-worker/Dockerfile
+    container_name: poc-semantic-worker
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      SEMANTIC_MODEL_BASE_URL: ${SEMANTIC_MODEL_BASE_URL:-https://api.minimax.cn/v1}
+      SEMANTIC_MODEL_NAME: ${SEMANTIC_MODEL_NAME:-MiniMax-M3.1-Flash-Preview}
+      SEMANTIC_MODEL_API_KEY: ${SEMANTIC_MODEL_API_KEY:-}
+      SEMANTIC_WORKER_ID: ${SEMANTIC_WORKER_ID:-semantic-worker-1}
+    depends_on:
+      api:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web-console:
+    build: ./web-console
+    container_name: poc-web-console
+    ports:
+      - "${POC_WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "if command -v curl >/dev/null 2>&1; then curl -fsS --max-time 12 http://127.0.0.1:3000/health/ready >/dev/null; else wget -q -T 12 -O /dev/null http://127.0.0.1:3000/health/ready; fi"]
+      interval: 5s
+      timeout: 15s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    external: true
+    name: ${POC_PG_VOLUME_NAME:-demo_pgdata}
+  redisdata:
+    external: true
+    name: ${POC_REDIS_VOLUME_NAME:-demo_redisdata}
+  miniodata:
+    external: true
+    name: ${POC_MINIO_VOLUME_NAME:-demo_miniodata}
+  audio-data:
+    external: true
+    name: ${POC_AUDIO_VOLUME_NAME:-demo_audio-data}
+  media-recordings:
+    name: ${POC_RECORDINGS_VOLUME_NAME:-demo_media-recordings}
+  supervision-evidence:
+    name: ${POC_SUPERVISION_EVIDENCE_VOLUME_NAME:-poc_supervision_evidence}

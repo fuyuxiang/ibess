@@ -1,0 +1,75 @@
+{
+  "synthetic": true,
+  "phase_configs": [
+    {
+      "contract_version": "2.0.0",
+      "project_id": "project-a",
+      "room_id": "room-a",
+      "session_id": "session-a",
+      "source_id": "camera-a",
+      "stage_snapshot_id": "snap-1",
+      "phase_id": "DETAILED",
+      "phase_version": 1,
+      "effective_at": "2026-10-19T02:00:00Z",
+      "enabled_scenes": [
+        "S03"
+      ],
+      "always_on_scenes": [
+        "S10"
+      ],
+      "assets": [],
+      "rule_versions": {
+        "S03": "s03-v1",
+        "S10": "s10-v1"
+      },
+      "exceptions": [],
+      "sync_status": "pending"
+    }
+  ],
+  "observations": [
+    {
+      "contract_version": "2.0.0",
+      "source_id": "camera-a",
+      "observation_id": "synthetic-s10-insufficient",
+      "occurred_at": "2026-10-19T02:00:12Z",
+      "media_run_id": "run-1",
+      "asset_id": "asset-1",
+      "start_ms": 12000,
+      "end_ms": 15000,
+      "type": "video_offline",
+      "payload": {
+        "gap_id": "gap:camera-a:run-1:offline:12000",
+        "gap_media_run_id": "run-1",
+        "technical_reason": "no_frame",
+        "gap_start_unknown": true
+      },
+      "model_name": "stub",
+      "model_version": "v1",
+      "quality_flags": [],
+      "evidence_refs": [
+        {
+          "contract_version": "2.0.0",
+          "project_id": "project-a",
+          "room_id": "room-a",
+          "session_id": "session-a",
+          "source_id": "camera-a",
+          "evidence_id": "gap:camera-a:run-1:offline:12000:evidence",
+          "media_run_id": "run-1",
+          "asset_id": "asset-1",
+          "evidence_type": "gap",
+          "start_ms": null,
+          "end_ms": null,
+          "sha256": null,
+          "status": "missing"
+        }
+      ],
+      "project_id": "project-a",
+      "room_id": "room-a",
+      "session_id": "session-a",
+      "stage_snapshot_id": "snap-1",
+      "phase_id": "DETAILED",
+      "phase_version": 1,
+      "binding_status": "bound"
+    }
+  ]
+}

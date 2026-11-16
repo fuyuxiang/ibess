@@ -1,0 +1,23 @@
+import { useState } from 'react';
+import { Alert, Button, Card, Form, Input, Modal, Popconfirm, Select, Space, Table, Tag } from 'antd';
+import { authFetch, type AdminUser } from '../api/auth';
+import { useRefreshingQuery } from '../components/workflow/useRefreshingQuery';
+import { PageHeading, RequestError } from './Supervision';
+import { passwordRules } from '../components/auth/Login';
+const roleLabels:Record<string,string>={supervisor:'监管与复核',operator:'现场处置',viewer:'只读查阅'};
+type Account=AdminUser&{account_id:string;active:boolean};
+async function teamRequest<T>(path='',init?:RequestInit):Promise<T>{const r=await authFetch('/api/auth/team'+path,init);const b=await r.json();if(!r.ok)throw Error(typeof b.detail==='string'?b.detail:'账号配置无效，请核对输入');return b;}
+export default function SupervisionTeam(){
+  const query=useRefreshingQuery<Account[]>('team',signal=>teamRequest('',{signal}));const [open,setOpen]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');const [form]=Form.useForm();
+  async function save(){if(busy)return;try{const values=await form.validateFields();setBusy(true);setError('');await teamRequest('',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(values)});form.resetFields();setOpen(false);query.reload();}catch(e){if(e instanceof Error)setError(e.message);}finally{setBusy(false);}}
+  async function patch(account:Account,values:Partial<Account>){if(busy)return;setBusy(true);setError('');try{await teamRequest('/'+account.account_id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(values)});query.reload();}catch(e){setError(e instanceof Error?e.message:'操作失败');}finally{setBusy(false);}}
+  return <div className="sv-page"><PageHeading title="岗位与账号" description="本单位账号按监管复核、现场处置和只读查阅分工；管理员管理配置，账号停用或岗位变更后原会话失效。" extra={<Button type="primary" onClick={()=>{setError('');form.resetFields();form.setFieldsValue({role:'operator'});setOpen(true);}}>新增岗位账号</Button>}/>
+    <RequestError error={error||query.error} reload={query.reload}/><Alert type="info" showIcon message="账号访问范围为本单位的监管项目" description="监管岗位办理人工认定、分派、复核与导出；处置岗位接收本人任务并提交反馈；查阅岗位只读。现场通知采用实际组织流程，系统不冒充已发送外部通知。"/>
+    <Card><Table rowKey="account_id" dataSource={query.data||[]} loading={query.loading} pagination={false} columns={[{title:'账号',dataIndex:'username'},{title:'姓名 / 展示名',dataIndex:'display_name'},{title:'岗位',render:(_,a:Account)=><Select aria-label={'岗位 '+a.username} value={a.role} disabled={busy} style={{width:150}} options={Object.entries(roleLabels).map(([value,label])=>({value,label}))} onChange={role=>void patch(a,{role})}/>},{title:'状态',render:(_,a:Account)=><Tag color={a.active?'green':'default'}>{a.active?'启用':'停用'}</Tag>},{title:'操作',render:(_,a:Account)=><Popconfirm title={`确认${a.active?'停用':'启用'}账号 ${a.username}？`} description="原会话将失效，需要重新登录。" onConfirm={()=>patch(a,{active:!a.active})}><Button disabled={busy} danger={a.active}>{a.active?'停用':'启用'}</Button></Popconfirm>}]}/></Card>
+    <Modal title="新增岗位账号" open={open} confirmLoading={busy} maskClosable={false} onCancel={()=>{if(!busy){setOpen(false);form.resetFields();}}} onOk={()=>void save()} okText="创建账号" cancelText="取消">
+      {error&&<Alert type="error" message={error}/>}
+      <Form form={form} layout="vertical" disabled={busy}><Form.Item name="username" label="登录账号" rules={[{required:true},{pattern:/^[A-Za-z0-9_]{3,32}$/,message:'3–32位字母、数字或下划线'}]}><Input autoComplete="off" maxLength={32}/></Form.Item><Form.Item name="display_name" label="姓名 / 展示名" rules={[{required:true,whitespace:true}]}><Input maxLength={64}/></Form.Item><Form.Item name="role" label="工作岗位" rules={[{required:true}]}><Select options={Object.entries(roleLabels).map(([value,label])=>({value,label}))}/></Form.Item><Form.Item name="password" label="初始密码" rules={passwordRules}><Input.Password autoComplete="new-password" maxLength={128}/></Form.Item></Form>
+      <Space><small>账号使用者可在自己的账号菜单修改密码。</small></Space>
+    </Modal>
+  </div>;
+}

@@ -1,0 +1,27 @@
+name: ibess-test
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ibess_test
+      POSTGRES_PASSWORD: local-test-only
+      POSTGRES_DB: ibess_test
+    ports:
+      - "127.0.0.1:${IBESS_TEST_PG_PORT:-55432}:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ibess_test -d ibess_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+  redis:
+    image: redis:7
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:${IBESS_TEST_REDIS_PORT:-56379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30

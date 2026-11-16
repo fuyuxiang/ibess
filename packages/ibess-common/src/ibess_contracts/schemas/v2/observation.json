@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ibess.local/contracts/v2/observation.schema.json",
+  "title": "observation",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "project_id",
+    "room_id",
+    "session_id",
+    "source_id",
+    "stage_snapshot_id",
+    "phase_id",
+    "phase_version",
+    "observation_id",
+    "binding_status",
+    "occurred_at",
+    "media_run_id",
+    "asset_id",
+    "start_ms",
+    "end_ms",
+    "type",
+    "payload",
+    "model_name",
+    "model_version",
+    "quality_flags",
+    "evidence_refs"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "2.0.0"
+    },
+    "project_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "room_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "session_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "asset_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "media_run_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "stage_snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "phase_id": {
+      "anyOf": [
+        {
+          "enum": [
+            "SIGNIN",
+            "DISCIPLINE",
+            "PRELIM",
+            "DETAIL",
+            "CLARIFY",
+            "OPENING",
+            "ATTENDANCE",
+            "RECUSAL",
+            "PRELIMINARY",
+            "DETAILED",
+            "CLARIFICATION",
+            "SCORING",
+            "REPORT",
+            "OFFLINE_QA"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "phase_version": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "binding_status": {
+      "enum": [
+        "bound",
+        "unbound"
+      ]
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "utc"
+    },
+    "start_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "end_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "quality_flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "uniqueItems": true
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "observation_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "type": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "model_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "model_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "binding_status": {
+            "const": "bound"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "room_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "session_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "stage_snapshot_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "phase_id": {
+            "enum": [
+              "SIGNIN",
+              "DISCIPLINE",
+              "PRELIM",
+              "DETAIL",
+              "CLARIFY",
+              "OPENING",
+              "ATTENDANCE",
+              "RECUSAL",
+              "PRELIMINARY",
+              "DETAILED",
+              "CLARIFICATION",
+              "SCORING",
+              "REPORT",
+              "OFFLINE_QA"
+            ]
+          },
+          "phase_version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "stage_snapshot_id": {
+            "type": "null"
+          },
+          "phase_id": {
+            "type": "null"
+          },
+          "phase_version": {
+            "type": "null"
+          },
+          "quality_flags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "uniqueItems": true,
+            "contains": {
+              "const": "binding_missing"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

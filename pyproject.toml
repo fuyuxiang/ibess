@@ -1,0 +1,10 @@
+[tool.ruff]
+target-version = "py311"
+extend-exclude = ["tmp", "models", "models_cache", "web-console/node_modules", "web-console/dist"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "function"

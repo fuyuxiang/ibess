@@ -1,0 +1,83 @@
+# 负责人 A 的部署叠加（执行卡 10.2；5.01 瘦身）。B 的 docker-compose.yml 与 start-demo.sh 不改，B 的启动方式照旧。
+# 5.01 起 A 的接线（api 路由、vision-worker 扩展、event-service 分支）已进 B 的服务代码，不再需要叠加；本文件只放可选项：
+#   - api 追加素材根只读挂载（4.1 素材登记要读文件；不挂也能启动，登记时报素材根不可用）；仍用 B 的 api 镜像
+#   - stage-media-controller（4.2，profile media）、offline-worker（9.4 视觉离线质检，profile offline）
+# 用法（项目根）：docker compose -f docker-compose.yml -f deploy/integration/docker-compose.a.yml [--profile media] [--profile offline] up -d
+# 只用 B 的 compose 重建 api 会去掉素材根挂载，只影响 4.1，B 的功能不受影响。
+# 多个 -f 时相对路径按第一个文件所在目录（项目根）解析。新服务不映射端口，地址一律用服务名。
+
+services:
+  api:
+    environment:
+      STAGE_ASSETS_ROOT: /stage-assets
+    volumes:
+      - ${POC_STAGE_ASSETS_DIR:-./stage_assets}:/stage-assets:ro
+      # 部署脚本挂进来，迁移可直接 exec 执行（/integration/migrate_a_tables.py --target api --apply）
+      - ./deploy/integration:/integration:ro
+
+  stage-media-controller:
+    profiles: ["media"]
+    build:
+      context: ./scripts
+      dockerfile: ../deploy/integration/media-controller.Dockerfile
+    container_name: poc-stage-media-controller
+    environment:
+      MEDIA_SESSION_ID: ${MEDIA_SESSION_ID:-}
+      MEDIA_SOURCE_ID: ${MEDIA_SOURCE_ID:-}
+      MEDIA_CONSUMER_ID: ${MEDIA_CONSUMER_ID:-media-controller}
+      MEDIA_CONTROL_TOKEN: ${MEDIA_CONTROL_TOKEN:-}
+      REDIS_URL: redis://redis:6379/0
+      PHASE_CONTROL_STREAM: ${PHASE_CONTROL_STREAM:-phase-control}
+      MEDIA_RUNS_STREAM: ${MEDIA_RUNS_STREAM-media-runs}      # 不带冒号：显式设为空串可关闭（4.2 交接「空串关闭」）
+      API_INTERNAL_BASE_URL: http://api:8000
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      STAGE_ASSETS_ROOT: /stage-assets
+      # 独立推流路径：B 的 poc-pub-cam1～9 推 cam1～cam9，控制器推 stage，互不顶掉（5.01）
+      RTSP_PUBLISH_URL: ${RTSP_PUBLISH_URL:-rtsp://mediamtx:8554/stage}
+      MEDIAMTX_API_URL: http://mediamtx:9997
+      MEDIA_RUN_REGISTRY_PATH: /var/lib/poc/media_runs/${MEDIA_SOURCE_ID:-unset}.json
+      MEDIA_CONFIRM_SECONDS: ${MEDIA_CONFIRM_SECONDS:-5}
+      MEDIA_STOP_GRACE_SECONDS: ${MEDIA_STOP_GRACE_SECONDS:-3}
+      MEDIA_VERIFY_SHA256: ${MEDIA_VERIFY_SHA256:-0}
+    volumes:
+      - ${POC_STAGE_ASSETS_DIR:-./stage_assets}:/stage-assets:ro
+      - media-runs:/var/lib/poc/media_runs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+      mediamtx:
+        condition: service_started
+    # 缺 MEDIA_SESSION_ID 等配置时控制器启动即报错；有限次重启，不无限崩溃循环
+    restart: on-failure:5
+
+  offline-worker:
+    profiles: ["offline"]
+    build:
+      context: .
+      dockerfile: services/offline-worker/Dockerfile
+    container_name: poc-offline-worker
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-demo}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-demo}
+      STAGE_ASSETS_ROOT: /stage-assets
+      OFFLINE_DETECTOR_WEIGHTS: ${OFFLINE_DETECTOR_WEIGHTS:-/assets/yolov8n.pt}
+      OFFLINE_DETECTOR_DEVICE: ${OFFLINE_DETECTOR_DEVICE:-cuda}
+      OFFLINE_WORKER_ID: ${OFFLINE_WORKER_ID:-offline-worker-1}
+      OFFLINE_LEASE_SECONDS: ${OFFLINE_LEASE_SECONDS:-120}
+    volumes:
+      - ${POC_STAGE_ASSETS_DIR:-./stage_assets}:/stage-assets:ro
+      - ../dev_assets:/assets:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  media-runs:

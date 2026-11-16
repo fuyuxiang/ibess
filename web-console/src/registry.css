@@ -1,0 +1,27 @@
+.registry-page{display:flex;flex-direction:column;gap:14px;color:#244e80;max-width:1700px;margin:0 auto}
+.registry-page .ant-card{background:#fff;border:1px solid #e7edf4;border-radius:8px;box-shadow:0 3px 12px rgba(39,76,112,.04)}
+.registry-heading-card .ant-card-body{padding:20px 24px}
+.registry-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.registry-heading h1{display:flex;gap:10px;align-items:center;font-size:20px;font-weight:600;line-height:1.4;margin:0;color:#123f7e}
+.registry-heading h1 .anticon{color:#1677ff}
+.registry-heading p{margin:7px 0 0;font-size:12px;color:#7891ab;line-height:1.8}
+.registry-content-card .ant-card-body{padding:18px 22px 22px}
+.registry-table-tools{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+.registry-table-tools>.ant-input-affix-wrapper{max-width:380px}
+.registry-page .ant-tabs-nav{margin-bottom:18px}
+.registry-page .ant-tabs-tab{padding:10px 0;font-size:14px}
+.registry-page .ant-table{font-size:12px;color:#426687}
+.registry-page .ant-table-thead>tr>th{background:#f6f9fd;color:#607e9c;font-weight:500}
+.registry-page .ant-table-cell{overflow-wrap:anywhere}
+.registry-page .ant-btn-link{padding-inline:2px;font-size:12px}
+.registry-date{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#7891ab}
+.registry-form{margin-top:16px}
+.registry-form-grid,.registry-member-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.registry-form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:22px}
+.registry-modal-alert{margin:12px 0}
+.registry-help{font-size:12px;color:#7891ab;line-height:1.8;margin:10px 0 16px;overflow-wrap:anywhere}
+.registry-member-editor{margin:22px 0 14px;padding-top:18px;border-top:1px solid #e9eff6}
+.registry-member-editor h3{font-size:14px;font-weight:600;color:#315a80;margin:0 0 14px}
+.registry-member-fields{grid-template-columns:2fr 1fr}
+.registry-member-fields .ant-form-item{margin-bottom:0}
+@media(max-width:850px){.registry-heading{align-items:flex-start;flex-direction:column}.registry-form-grid,.registry-member-fields{grid-template-columns:1fr}.registry-table-tools{align-items:stretch;flex-direction:column}.registry-table-tools>.ant-input-affix-wrapper{max-width:none}}

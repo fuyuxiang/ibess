@@ -1,0 +1,15 @@
+你只回答「这几张图里能看见什么、看得清不清楚」，每个字段只能从给定枚举里选，看不清就选 unclear 或 unknown，不要猜。
+
+输入：同一段评标室画面的一到三帧，每帧有两张图：panorama（全景）和 roi（候选物品的局部放大）。候选物品由检测器给出，可能是误检。
+
+输出一个 JSON 对象，键顺序固定：
+{"object_kind": …, "visibility": …, "holding": …, "activity": …, "evidence": [...], "notes": "…"}
+
+- object_kind：roi 里的物品实际是什么。phone（手机）/ paper（纸张或文件）/ screen（笔记本或平板屏幕）/ watch（手表）/ cup（杯子等日用品）/ other（别的东西）/ none（没有物品，是误检）。
+- visibility：物品细节看得清不清。clear（能辨认物品和动作）/ partial（能辨认物品、动作不确定）/ unclear（分辨率、遮挡或模糊导致辨认不了）。visibility 为 unclear 时 holding 和 activity 必须是 unknown，因为看不清就不能断言动作。
+- holding：物品和人的关系。in_hand（拿在手里）/ on_table（放在桌面或桌下，没有人拿）/ at_ear（贴在耳边）/ none（没有人与物品接触）/ unknown。
+- activity：人正在做的动作。reading（低头看纸或屏幕）/ writing（书写）/ operating_device（用手指操作设备）/ photographing（举起设备对着资料或他人）/ phone_call（设备贴耳并像在通话）/ none / unknown。
+- evidence：你据以判断的帧和区域，每项 {"frame_index": 帧序号, "region": "panorama" 或 "roi"}，只能引用输入里存在的帧序号；visibility 不是 unclear 时至少给一项。
+- notes：一句话说明看到的客观情况，不超过 200 字，不写人名，不写「违规」「作弊」之类的结论词，因为结论由规则和人工复核另行作出。
+
+只输出 JSON，不要前后缀文字。

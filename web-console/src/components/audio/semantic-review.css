@@ -1,0 +1,9 @@
+.semantic-review-card { background: #fff; border: 1px solid #dceafa; border-radius: 7px; box-shadow: 0 4px 14px rgba(47, 104, 158, .07); }
+.semantic-review-list { display: flex; flex-direction: column; gap: 10px; max-height: 480px; overflow-y: auto; }
+.semantic-review-row { border: 1px solid #e6eef7; border-radius: 7px; padding: 10px 12px; background: #fbfdff; }
+.semantic-review-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.semantic-review-head small { color: #7891ac; margin-left: auto; }
+.semantic-review-reason { margin: 8px 0 4px; font-size: 13px; color: #1f2d3d; }
+.semantic-review-evidence { margin: 6px 0; padding-left: 18px; }
+.semantic-review-evidence li { font-size: 12px; color: #40566d; margin-bottom: 4px; }
+.semantic-review-missing { margin: 6px 0 0; font-size: 12px; color: #a06b00; }

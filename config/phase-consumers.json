@@ -1,0 +1,19 @@
+{
+  "event-service": {
+    "token_sha256": "ece04a38fdac7d7479ec6b51e6fb7bf84326edbbc11b4e9c50587f3acd1ce224",
+    "scopes": [
+      {
+        "project_id": "0671ff8f-2abb-420b-95b0-206fec89e46e",
+        "room_id": "8d25e744-9ef1-48d2-9901-7422935c0f76",
+        "session_id": "a7214dea-f3ff-43e8-9eb8-9ab3a21c9ebd",
+        "source_id": "camera-002"
+      },
+      {
+        "project_id": "6a3bfa02-5145-4221-8392-b065a2538df0",
+        "room_id": "76a4066e-c63b-4b91-a17f-13a38407962b",
+        "session_id": "392b84fd-45fc-413f-bb58-2de83a12a072",
+        "source_id": "camera-002"
+      }
+    ]
+  }
+}

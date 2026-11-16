@@ -1,0 +1,36 @@
+{
+  "dataset": "8.4-first-batch",
+  "version": "1.0",
+  "description": "首批S06/S07独立样本评测基准：7段AI合成素材 × 2场景。expected依据素材txt标注的用途与业务上下文；boundary_allow表示模型结论可辩护（不计为硬错误但需记录）。",
+  "materials": [
+    {"prefix": "01_", "title_contains": "正常公开讨论", "source_label": "正常讨论负样本；A/B轮流发言", "windows": [
+      {"scene": "S06", "expected_conclusion": "normal"},
+      {"scene": "S07", "expected_conclusion": "normal"}
+    ]},
+    {"prefix": "02_", "title_contains": "禁止阶段持续讲话", "source_label": "单人讲话/VAD与阶段规则测试；语义不涉施压或泄密", "windows": [
+      {"scene": "S06", "expected_conclusion": "normal"},
+      {"scene": "S07", "expected_conclusion": "normal"}
+    ]},
+    {"prefix": "03_", "title_contains": "疑似施压发言", "source_label": "S06疑似倾向性施压线索；含拒绝不当要求的上下文（B明确拒绝，不把双方都认定施压）", "windows": [
+      {"scene": "S06", "expected_conclusion": "suspected"},
+      {"scene": "S07", "expected_conclusion": "normal"}
+    ]},
+    {"prefix": "04_", "title_contains": "正常评分讨论", "source_label": "正常评分讨论负样本；出现评分/分数词汇不应自动触发施压结论", "windows": [
+      {"scene": "S06", "expected_conclusion": "normal"},
+      {"scene": "S07", "expected_conclusion": "normal"}
+    ]},
+    {"prefix": "05_", "title_contains": "必要澄清讨论", "source_label": "书面澄清正常样本；接收对象权限依赖业务记录，不能仅凭声音确定——S07关键授权缺失时另判证据不足", "windows": [
+      {"scene": "S06", "expected_conclusion": "normal"},
+      {"scene": "S07", "expected_conclusion": "insufficient", "accept_any": ["suspected", "normal"],
+       "note": "上下文依赖窗口：正确结论取决于澄清批准业务记录（本批未提供）。已批准→normal（电子系统=授权渠道）；未批准→suspected/insufficient。模型两种结论均有业务依据，不计硬错误"}
+    ]},
+    {"prefix": "06_", "title_contains": "无权对象获取保密评审信息", "source_label": "S07疑似泄密样本；明确评审信息、接收对象无授权和拒绝动作；S06视角不涉施压", "windows": [
+      {"scene": "S06", "expected_conclusion": "normal", "boundary_allow": ["suspected"], "note": "泄密素材在S06场景可能被判施压倾向，可辩护偏差"},
+      {"scene": "S07", "expected_conclusion": "suspected"}
+    ]},
+    {"prefix": "07_", "title_contains": "现场争执与威胁", "source_label": "S09秩序冲突样本；争执升级后明确停止并请求人工处置；录音只作为秩序关注线索", "windows": [
+      {"scene": "S06", "expected_conclusion": "normal", "boundary_allow": ["suspected"], "note": "威胁性表达接近S06边缘，suspected可辩护"},
+      {"scene": "S07", "expected_conclusion": "normal"}
+    ]}
+  ]
+}

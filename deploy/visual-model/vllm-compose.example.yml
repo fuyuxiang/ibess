@@ -1,0 +1,29 @@
+# 本地多模态模型服务模板（执行卡 7.1）。不接入正式 docker-compose.yml；选型定稿后由 10.2 合入。
+# 只在 Docker 内网开放（不映射宿主端口）；模型 ID、量化与显存参数按 model-manifest.json 填。
+services:
+  visual-model:
+    image: vllm/vllm-openai:<锁定版本>
+    container_name: poc-visual-model
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      HF_HUB_OFFLINE: "1"
+      VLLM_API_KEY_FILE: /run/secrets/visual_model_key
+    command: >
+      --model /models/<multimodal-model-id>
+      --served-model-name <served-name>
+      --max-model-len 8192
+      --max-num-seqs 1
+      --limit-mm-per-prompt image=6
+      --gpu-memory-utilization 0.45
+      --port 8001
+    volumes:
+      - ../../../models_cache/visual:/models:ro
+    secrets:
+      - visual_model_key
+    expose:
+      - "8001"
+    restart: unless-stopped
+secrets:
+  visual_model_key:
+    file: ../../../secrets/visual_model_key   # 仓库外；不提交

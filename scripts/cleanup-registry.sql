@@ -1,0 +1,7 @@
+-- 基础管理数据清理（2026-10-22 执行记录）：移除回归测试残留，业务化命名。
+-- 清理后：项目2（业务演示项目+评标演示项目）、房间7（A01-A06+B01）、工位2（A01/A06各W01）、
+-- 人员6（业务化姓名，演示单位/expert）。
+-- 说明：以下为已完成操作，保留作记录；如需在全新环境重建参考命名规范。
+-- update business_projects set name='评标演示项目（历史录播）' where name like '来源关联回归项目-30068b7f';
+-- update business_rooms set name='评标室 A06' where name like '来源关联回归评标室-30068b7f';
+-- 删除其余 4 个回归项目（先 participants→seats→rooms→projects）

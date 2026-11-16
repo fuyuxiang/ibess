@@ -1,0 +1,35 @@
+{
+  "synthetic": true,
+  "assets": [
+    {
+      "contract_version": "2.0.0",
+      "asset_id": "synthetic-video-01",
+      "asset_type": "video",
+      "relative_path": "synthetic/video.mp4",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "duration_ms": 60000,
+      "authorization_source": "synthetic-test-fixture",
+      "visibility_notes": "Synthetic contract example; no real media included"
+    },
+    {
+      "contract_version": "2.0.0",
+      "asset_id": "synthetic-audio-01",
+      "asset_type": "audio",
+      "relative_path": "synthetic/audio.wav",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "duration_ms": 60000,
+      "authorization_source": "synthetic-test-fixture",
+      "visibility_notes": "Synthetic contract example; no real media included"
+    },
+    {
+      "contract_version": "2.0.0",
+      "asset_id": "synthetic-scoring-01",
+      "asset_type": "scoring",
+      "relative_path": "synthetic/scoring.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "duration_ms": null,
+      "authorization_source": "synthetic-test-fixture",
+      "visibility_notes": "Synthetic contract example; no real media included"
+    }
+  ]
+}

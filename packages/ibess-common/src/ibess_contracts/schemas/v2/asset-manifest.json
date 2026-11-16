@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ibess.local/contracts/v2/asset-manifest.schema.json",
+  "title": "asset-manifest",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "asset_id",
+    "asset_type",
+    "relative_path",
+    "sha256",
+    "duration_ms",
+    "authorization_source",
+    "visibility_notes"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "2.0.0"
+    },
+    "asset_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "asset_type": {
+      "enum": [
+        "video",
+        "audio",
+        "scoring"
+      ]
+    },
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$"
+    },
+    "duration_ms": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "authorization_source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "visibility_notes": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,4 @@
+# Code-only update on an already built image of this release (shared package included).
+ARG BASE_IMAGE=poc-media-service:latest
+FROM ${BASE_IMAGE}
+COPY services/media-service/service ./service

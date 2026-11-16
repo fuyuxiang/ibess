@@ -1,0 +1,15 @@
+{
+  "_note": "模板：选型定稿后复制为 model-manifest.json 填写。全部是占位值，不代表已选定任何模型。",
+  "model_id": "<org>/<multimodal-model-id>",
+  "modality": "image+text",
+  "source": "<权重来源 URL 或内网仓库>",
+  "license": "<许可证名称与链接，交付前核实>",
+  "weights_sha256": "<权重文件或目录清单摘要>",
+  "quantization": "<none | awq | gptq | fp8>",
+  "context_length": 0,
+  "serving": {"engine": "vllm", "version": "<vLLM 版本>", "max_num_seqs": 1, "limit_mm_per_prompt": {"image": 6}},
+  "sampling": {"temperature": 0, "max_tokens": 400, "response_format": "json_object"},
+  "prompt": {"name": "visual-review", "version": "v1"},
+  "gpu": {"model": "<GPU 型号>", "vram_gb": 0, "shared_with": ["asr"]},
+  "benchmark": {"status": "not_run", "latency_p95_ms": null, "images_per_request": 6}
+}
