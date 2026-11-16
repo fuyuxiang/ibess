@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.business_fact_link_models import BusinessFactVerification
 from app.business_facts_models import BusinessAttendanceFact
+from app.business_models import BusinessRoom
 from app.db import get_session
 from app.face_models import PersonVerificationResult
 
@@ -31,8 +32,11 @@ def _actor(request: Request):
     return admin["username"]
 
 
-def _fact(session, fact_id, message="业务事实不存在"):
+def _fact(session, fact_id, message="业务事实不存在", *, lock_room=False):
     fact = session.get(BusinessAttendanceFact, str(fact_id))
+    if fact is not None and lock_room:
+        session.query(BusinessRoom).filter_by(room_id=fact.room_id).with_for_update().first()
+        fact = session.query(BusinessAttendanceFact).filter_by(fact_id=str(fact_id)).populate_existing().first()
     if fact is None:
         raise HTTPException(404, message)
     return fact
@@ -81,8 +85,11 @@ def candidates(fact_id: UUID, limit: int = 5, session: Session = Depends(get_ses
 def auto_link(request: Request, project_id: UUID, session: Session = Depends(get_session)):
     """为项目内未关联且已登记人员的 check_in/change 事实，自动关联该人最近一次 matched 核验。"""
     actor = _actor(request)
+    room_ids = [room.room_id for room in session.query(BusinessRoom).filter_by(
+        project_id=str(project_id)).order_by(BusinessRoom.room_id).with_for_update().all()]
     facts = (session.query(BusinessAttendanceFact)
              .filter(BusinessAttendanceFact.project_id == str(project_id),
+                     BusinessAttendanceFact.room_id.in_(room_ids),
                      BusinessAttendanceFact.fact_type.in_(("check_in", "change")),
                      BusinessAttendanceFact.person_id.isnot(None)).all())
     linked_ids = {row.fact_id for row in session.query(BusinessFactVerification).all()}
@@ -108,7 +115,7 @@ def auto_link(request: Request, project_id: UUID, session: Session = Depends(get
 
 @router.post("/fact-links/{fact_id}", status_code=201)
 def create_link(fact_id: UUID, body: VerificationLinkIn, request: Request, session: Session = Depends(get_session)):
-    fact = _fact(session, fact_id)
+    fact = _fact(session, fact_id, lock_room=True)
     if fact.person_id is None:
         raise HTTPException(422, "该事实未登记人员，无法关联人脸核验结果")
     result = session.get(PersonVerificationResult, str(body.result_id))
@@ -138,6 +145,7 @@ def get_link(fact_id: UUID, session: Session = Depends(get_session)):
 
 @router.delete("/fact-links/{fact_id}")
 def delete_link(fact_id: UUID, session: Session = Depends(get_session)):
+    _fact(session, fact_id, lock_room=True)
     link = session.query(BusinessFactVerification).filter_by(fact_id=str(fact_id)).first()
     if link is None:
         raise HTTPException(404, "该事实尚未关联人脸核验结果")

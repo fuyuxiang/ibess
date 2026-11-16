@@ -17,11 +17,7 @@ import {
 } from "antd";
 import {
   ArrowRightOutlined,
-  CheckCircleOutlined,
-  FileProtectOutlined,
   ReloadOutlined,
-  SearchOutlined,
-  VideoCameraOutlined,
 } from "@ant-design/icons";
 import {
   Link,
@@ -30,13 +26,9 @@ import {
 } from "react-router-dom";
 import type { EventItem } from "../api/client";
 import {
-  fetchSources,
-  fetchMonitoringHealth,
-  supervisionRequest,
-  type MonitoringSource,
   type SupervisionQuery,
+  type MonitoringSource,
 } from "../api/supervision";
-import { useRefreshingQuery } from "../components/workflow/useRefreshingQuery";
 import { useSupervision } from "../components/workflow/useSupervision";
 import {
   workflowColors,
@@ -47,7 +39,6 @@ import {
 } from "../components/workflow/supervision-model";
 import { useRegistry } from "../store/useRegistryStore";
 import { eventLabel, formatDateTime, riskColor, riskText } from "../utils/ui";
-import { phaseTitle } from "../api/stages";
 
 export function PageHeading({
   title,
@@ -100,7 +91,7 @@ export function WorkflowTag({ event }: { event: EventItem }) {
 export function eventColumns(returnTo = "/events") {
   return [
     {
-      title: "预警事件",
+      title: "告警事件",
       dataIndex: "event_type",
       width: 220,
       render: (value: string, e: EventItem) => (
@@ -115,14 +106,14 @@ export function eventColumns(returnTo = "/events") {
             {e.event_id.slice(0, 8).toUpperCase()} ·{" "}
             {e.occurred_at ? formatDateTime(e.occurred_at) : '现场时间未登记'}
           </small>
-          {e.is_demo && <Tag>业务模拟</Tag>}
+          {e.is_demo && <Tag>模拟数据</Tag>}
         </div>
       ),
     },
     {
       title: "项目 / 评标室",
       key: "scope",
-      width: 230,
+      width: 210,
       render: (_: unknown, e: EventItem) => (
         <div className="sv-event-cell">
           <span>{e.project_name || "未关联项目"}</span>
@@ -133,11 +124,11 @@ export function eventColumns(returnTo = "/events") {
     {
       title: "异常线索",
       dataIndex: "reason",
-      width: 300,
+      width: 260,
       render: (value: string) => <span className="sv-clue-preview" title={value}>{value || "待补充"}</span>,
     },
     {
-      title: "线索风险",
+      title: "风险等级",
       dataIndex: "risk_level",
       width: 100,
       render: (value: string, event: EventItem) => (
@@ -155,14 +146,10 @@ export function eventColumns(returnTo = "/events") {
       ),
     },
     {
-      title: "监管状态",
+      title: "处理状态",
       key: "workflow",
-      width: 150,
-      render: (_: unknown, e: EventItem) => <WorkflowTag event={e} />,
-    },
-    {
-      title: '人工结论', key:'resolution', width:160,
-      render: (_:unknown,e:EventItem) => <Tag color={e.resolution==='confirmed' ? 'red' : e.resolution ? 'green' : 'default'}>{resolutionLabels[e.resolution || ''] || '尚未认定'}</Tag>,
+      width: 185,
+      render: (_: unknown, e: EventItem) => <div className="sv-event-cell"><WorkflowTag event={e} /><small>{resolutionLabels[e.resolution || ''] || "尚未认定"}</small></div>,
     },
     {
       title: "操作",
@@ -174,38 +161,12 @@ export function eventColumns(returnTo = "/events") {
           to={`/event-detail?event_id=${encodeURIComponent(e.event_id)}`}
           state={{ returnTo }}
         >
-          {workflowStatus(e) === "ARCHIVED" ? "查看档案" : "核查处理"}{" "}
+          {workflowStatus(e) === "ARCHIVED" ? "查看档案" : "核查处置"}{" "}
           <ArrowRightOutlined />
         </Link>
       ),
     },
   ];
-}
-
-export function Workbench() {
-  const query=useSupervision({page_size:6,category:'behavior',queue:'confirm'});
-  const summary=useRefreshingQuery<{confirm:number;dispatch:number;review:number;archive:number;overdue:number;sessions:number}>('workbench-summary',signal=>supervisionRequest('/supervision/summary',{signal}));
-  const sources=useRefreshingQuery('workbench-sources',signal=>fetchSources(signal));
-  const health=useRefreshingQuery('workbench-health',signal=>fetchMonitoringHealth(signal));
-  const sessions=[...new Map((sources.data?.items||[]).filter(s=>s.session_status==='running').sort((a,b)=>Number(b.kind==='audio')-Number(a.kind==='audio')).map(s=>[s.session_id,s])).values()];
-  const uncertain=health.data?.items.filter(s=>s.stream_status==='offline'||['unknown','input_error'].includes(s.analysis_status)||['unknown','stale'].includes(s.recording_status));
-  const reload=()=>{query.reload();summary.reload();sources.reload();health.reload();};
-  const metrics=[{label:'在评场次',value:summary.data?.sessions,path:'/monitor',icon:<VideoCameraOutlined/>},
-    {label:'待核查线索',value:summary.data?.confirm,path:'/events?queue=confirm',icon:<SearchOutlined/>},
-    {label:'待复核反馈',value:summary.data?.review,path:'/events?queue=review',icon:<CheckCircleOutlined/>},
-    {label:'逾期待办',value:summary.data?.overdue,path:'/events?overdue=true',icon:<FileProtectOutlined/>}];
-  return <div className="sv-page sv-workbench"><PageHeading title="监管工作台" description="优先核查现场线索、跟进处置与复核，监测中断和未核验情况单独呈现。" extra={<><Link to="/events"><Button type="primary">进入事件中心</Button></Link><Button icon={<ReloadOutlined/>} onClick={reload}>刷新</Button></>}/>
-    <RequestError error={query.error||summary.error||sources.error||health.error} reload={reload}/>
-    <div className="sv-compact-metrics">{metrics.map(m=><Link key={m.label} to={m.path} className="sv-metric"><span>{m.icon} {m.label}</span><strong>{m.value??'—'}</strong></Link>)}</div>
-    <div className="sv-coverage-strip"><Space wrap><Tag color={uncertain?.length?'gold':'default'}>需核验来源 {health.data?uncertain?.length:'—'}</Tag><span>已登记 {sources.data?.items.filter(s=>s.kind!=='audio').length??'—'} 路画面 / {sources.data?.items.filter(s=>s.kind==='audio').length??'—'} 路拾音</span><Link to="/assurance">查看监测保障</Link></Space><small>{!sources.data?.items.length?'尚无监测来源时，不能将没有预警解释为现场正常。':'画面连接、语音输入观察、录像和分析回执分别核验。'}</small></div>
-    <Card title="优先核查" extra={<Space><ManualMarkButton/><Link to="/events?queue=confirm">查看核查队列 →</Link></Space>}><Table rowKey="event_id" dataSource={query.data?.items||[]} columns={eventColumns().filter(c=>c.key!=="resolution"&&c.key!=="workflow")} loading={query.loading} pagination={false} scroll={{x:1000}} locale={{emptyText:<Empty description={query.error?'加载失败，请重试':'当前没有待核查线索；监测覆盖情况请同时核对'}/>}}/></Card>
-    <div className="sv-workbench-bottom"><Card title="在评场次" extra={<Link to="/monitor">进入现场监测</Link>}><Table rowKey="session_id" size="small" dataSource={sessions} pagination={false} scroll={{x:600}} columns={[
-      {title:'项目 / 场次',render:(_,s:MonitoringSource)=><div className="sv-event-cell"><strong>{s.project_name}</strong><small>{s.session_name}</small></div>},
-      {title:'评标室',dataIndex:'room_name'},{title:'评标阶段',dataIndex:'phase_id',render:phaseTitle},
-      {title:'来源',render:(_,s:MonitoringSource)=>(sources.data?.items.filter(v=>v.session_id===s.session_id).length||0)+' 路'},
-      {title:'操作',render:(_,s:MonitoringSource)=><Link to={'/monitor?binding_id='+encodeURIComponent(s.binding_id)}>查看现场</Link>},
-    ]} locale={{emptyText:<Empty description="暂无进行中的已绑定场次"/>}}/></Card><Card title="处置与复核"><div className="sv-duty-links"><Link to="/events?queue=dispatch">待处置与反馈 <b>{summary.data?.dispatch??'—'}</b> →</Link><Link to="/events?queue=review">待复核反馈 <b>{summary.data?.review??'—'}</b> →</Link><Link to="/events?mine=true">本账号负责的任务 →</Link><Link to="/archives">查阅场次监管记录 →</Link></div></Card></div>
-  </div>;
 }
 
 export function SupervisionList({
@@ -279,23 +240,23 @@ export function SupervisionList({
       ? "监管档案"
       : mode === "process"
         ? "处置中心"
-        : "事件中心";
+        : "告警处置";
   return (
-    <div className="sv-page">
+    <div className="sv-page console-queue">
       {!embedded&&<PageHeading
         title={title}
         description={
           mode === "archive"
-            ? "统一查阅核查结论、关联证据与全过程操作记录。"
+            ? "查阅核查结论、证据和处置记录。"
             : mode === "process"
-              ? "跟踪责任人、处置期限、反馈结果和复核进度。"
-              : "以事件为中心核查现场行为；技术故障单独分类展示。"
+              ? "跟踪处置任务、反馈和复核进度。"
+              : "核查告警证据，跟进处置与复核。"
         }
         extra={
 <Space><ManualMarkButton/><Button icon={<ReloadOutlined/>} loading={query.loading} onClick={query.reload}>刷新</Button></Space>
         }
       />}
-      {mode!=="archive"&&<Tabs activeKey={queue||"all"} onChange={value=>{setParams(previous=>{const next=new URLSearchParams(previous);value==='all'?next.delete('queue'):next.set('queue',value);next.delete('workflow_status');next.delete('page');return next;});}} items={[{key:"confirm",label:"待核查"},{key:"dispatch",label:"待处置"},{key:"review",label:"待复核"},{key:"active",label:"全部未办结"},{key:"all",label:"全部事件"}]}/> }
+      {mode!=="archive"&&<Tabs className="console-queue-tabs" activeKey={queue||"all"} onChange={value=>{setParams(previous=>{const next=new URLSearchParams(previous);value==='all'?next.delete('queue'):next.set('queue',value);next.delete('workflow_status');next.delete('page');return next;});}} items={[{key:"confirm",label:"待核查"},{key:"dispatch",label:"待处置"},{key:"review",label:"待复核"},{key:"active",label:"全部未办结"},{key:"all",label:"全部事件"}]}/> }
       {(queryParams.session_id||queryParams.overdue)&&<Space wrap style={{marginBottom:12}}>{queryParams.session_id&&<Tag closable onClose={()=>setFilter('session_id')}>已限定场次 · {queryParams.session_id.slice(0,8)}</Tag>}{queryParams.overdue&&<Tag color="red" closable onClose={()=>setFilter('overdue')}>仅逾期待办</Tag>}</Space>}
       <RequestError
         error={query.error || registry.error}
@@ -307,14 +268,17 @@ export function SupervisionList({
       <Card className="sv-filter-card">
         <div className="sv-filters">
           <Input.Search
-            aria-label="检索预警事件"
-            placeholder="事件编号、项目、评标室、异常描述"
+            aria-label="搜索告警事件"
+            placeholder="事件编号、项目、评标室或线索"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onSearch={(value) => setFilter("keyword", value.trim())}
             allowClear
             style={{ width: 300 }}
           />
+          <Button aria-expanded={advanced} aria-controls="event-advanced-filters" onClick={()=>setAdvanced(!advanced)}>{advanced?'收起筛选':'更多筛选'}{[queryParams.project_id,queryParams.room_id,queryParams.date_from,queryParams.date_to,queryParams.risk_level,queryParams.workflow_status,queryParams.resolution,queryParams.category!=='behavior'].filter(Boolean).length>0?'（已设置）':''}</Button>
+          <Checkbox checked={queryParams.mine} onChange={e=>setFilter('mine',e.target.checked?'true':'false')}>仅本账号负责</Checkbox>
+          <div className="sv-advanced-filters" id="event-advanced-filters" hidden={!advanced}>
           <Select
             aria-label="所属项目"
             placeholder="全部项目"
@@ -342,9 +306,7 @@ export function SupervisionList({
               )
               .map((r) => ({ value: r.room_id, label: r.name }))}
           />
-          <Button onClick={()=>setAdvanced(!advanced)}>{advanced?'收起高级筛选':'高级筛选'}{[queryParams.risk_level,queryParams.workflow_status,queryParams.resolution,queryParams.category!=='behavior'].filter(Boolean).length>0?'（已设置）':''}</Button>
-          <Checkbox checked={queryParams.mine} onChange={e=>setFilter('mine',e.target.checked?'true':'false')}>仅本账号负责</Checkbox>
-          <div className="sv-advanced-filters" hidden={!advanced}>
+
           <Select
             aria-label="风险等级"
             placeholder="全部风险"
@@ -358,8 +320,8 @@ export function SupervisionList({
             }))}
           />
           {mode!=="archive"&&<Select
-            aria-label="监管状态"
-            placeholder="全部监管状态"
+            aria-label="处理状态"
+            placeholder="全部状态"
             allowClear
             value={queryParams.workflow_status}
             style={{ width: 170 }}
@@ -377,17 +339,16 @@ export function SupervisionList({
             options={[...Object.entries(resolutionLabels).map(([value,label])=>({value,label})),{value:'unreviewed',label:'尚未认定'}]}
           />
           <Select
-            aria-label="预警分类"
+            aria-label="告警分类"
             value={queryParams.category}
             style={{ width: 150 }}
             onChange={(value) => setFilter("category", value)}
             options={[
-              { value: "behavior", label: "现场行为预警" },
-              { value: "technical", label: "监测技术故障" },
+              { value: "behavior", label: "行为告警" },
+              { value: "technical", label: "设备与服务故障" },
               { value: "all", label: "全部记录" },
             ]}
           />
-          </div>
           <label className="sv-date-label">
             开始日期
             <input
@@ -406,7 +367,8 @@ export function SupervisionList({
               onChange={(e) => setFilter("date_to", e.target.value)}
             />
           </label>
-          <small className="sv-muted">日期按北京时间的现场发生时间筛选；未登记现场时间的录音线索不纳入日期范围。</small>
+          <small className="sv-muted">按北京时间筛选发生日期；未登记采集时间的录音不纳入日期筛选。</small>
+          </div>
           <Button
             onClick={() => {
               setParams(embedded?{tab:"events"}:{});
@@ -417,17 +379,17 @@ export function SupervisionList({
           </Button>
         </div>
       </Card>
-      <Card
+      <Card className="console-queue-table"
         title={
           <Space>
-            {title}
+            {mode==='archive'?'归档记录':({confirm:'待核查告警',dispatch:'待处置任务',review:'待复核反馈',active:'全部未办结'} as Record<string,string>)[queue||'']||'全部告警'}
             <Tag>{query.data?.total ?? "—"} 条</Tag>
             {queue === "confirm" && (
               <Tag color="orange">
-                待确认队列{" "}
+                待核查队列{" "}
                 <button
                   className="sv-tag-close"
-                  aria-label="清除待确认筛选"
+                  aria-label="清除待核查筛选"
                   onClick={() => setFilter("queue")}
                 >
                   ×
@@ -454,8 +416,8 @@ export function SupervisionList({
                     width: 230,
                     render: (_: unknown, e: EventItem) => (
                       <div className="sv-event-cell">
-                        <strong>{e.assignee || "待登记责任人"}</strong>
-                        <small>{e.task_receipt?.received_at?'已登记接收':'尚未登记接收'}</small>
+                        <strong>{e.assignee || "未分派"}</strong>
+                        <small>{e.task_receipt?.received_at?"已接收":"待接收"}</small>
                         <small>
                           {e.due_at ? formatDateTime(e.due_at) : "未指定期限"}
                         </small>
@@ -468,7 +430,7 @@ export function SupervisionList({
           }
           dataSource={query.data?.items || []}
           loading={query.loading}
-          scroll={{ x: queue==='dispatch'||queue==='review'||mode==='process'?1490:1260 }}
+          scroll={{ x: 1080 }}
           pagination={{
             current: queryParams.page,
             pageSize: 20,
@@ -488,7 +450,7 @@ export function SupervisionList({
                 description={
                   query.error
                     ? "加载失败，请重试"
-                    : "没有符合条件的记录，可调整筛选条件"
+                    : "暂无匹配记录，请调整筛选条件"
                 }
               />
             ),

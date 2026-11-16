@@ -25,7 +25,7 @@ class RegistryInput(BaseModel):
 class ProjectIn(RegistryInput):
     code: Code
     name: Name
-    owner: Name
+    owner: Name | None = None
     start_at: datetime | None = None
     end_at: datetime | None = None
     status: Literal["draft", "running", "closed"] = "draft"
@@ -45,7 +45,7 @@ class RoomIn(RegistryInput):
     project_id: UUID
     code: Code
     name: Name
-    location: Location
+    location: Location | None = None
     mode: Literal["centralized", "remote"] = "centralized"
     enabled: bool = True
 

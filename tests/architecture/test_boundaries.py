@@ -94,6 +94,8 @@ class ArchitectureTest(unittest.TestCase):
     def test_every_frozen_table_has_a_schema_owner(self):
         directory = ROOT / "services/api/migrations"
         baseline = json.loads((directory / "snapshots/0001_schema.json").read_text())
+        baseline += json.loads((directory / "snapshots/0004_workflows.json").read_text())
+        baseline += json.loads((directory / "snapshots/0006_preparation.json").read_text())
         ownership = json.loads((directory / "ownership.json").read_text())
         self.assertEqual(
             {table["name"] for table in baseline}, set(ownership["tables"])

@@ -219,6 +219,16 @@ def capture_and_match(camera: str | None = None, record: bool = True,
 
 
 def run_once(camera: str | None = None) -> int:
+    from app.core.supervision_scope import resolve_scope
+    from app.session_workflow_models import SessionWorkflow
+    source_id = os.path.basename(camera or CAMERA_URL)
+    with SessionLocal() as db:
+        scope = resolve_scope(db, source_id, datetime.now(timezone.utc))
+        if not scope:
+            return 0
+        workflow = db.get(SessionWorkflow, scope['session_id'])
+        if workflow is not None and not workflow.identity_verification_enabled:
+            return 0
     result = capture_and_match(camera, record=True, source='自动抓拍')
     return 1 if result.get('recorded') else 0
 

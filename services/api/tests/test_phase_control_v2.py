@@ -625,6 +625,18 @@ class PhaseControlTests(unittest.TestCase):
                         self.assertEqual(503,client.get(self.internal()+'/config',headers=self.consumer_headers()).status_code)
         asyncio.run(exercise())
 
+    def test_empty_initial_scope_is_valid_but_cannot_read_or_ack_any_session(self):
+        module=self.load_test_main();mapping=self.credential_mapping()
+        mapping['media-controller']['scopes']=[]
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'consumers.json';path.write_text(json.dumps(mapping))
+            with patch.dict(os.environ,{'POC_PHASE_CONTROL_CONSUMERS_FILE':str(path)}):
+                accepted=module.load_phase_control_consumers(['media-controller','event-dispatcher'])
+            self.app.state.phase_control_consumers=accepted
+            with TestClient(self.app) as client:
+                self.assertEqual(403,client.get(self.internal()+'/config',headers=self.consumer_headers()).status_code)
+                self.assertEqual(403,client.put(self.internal()+'/acks/media-controller',json=self.ack(),headers=self.consumer_headers()).status_code)
+
     def test_invalid_credential_mapping_rejects_before_worker_start(self):
         module=self.load_test_main();base=self.credential_mapping()
         invalid=[]
@@ -633,7 +645,7 @@ class PhaseControlTests(unittest.TestCase):
         altered(lambda v:v['media-controller'].update(token=self.consumer_token))
         altered(lambda v:v['event-dispatcher'].update(token_sha256=v['media-controller']['token_sha256']))
         altered(lambda v:v['media-controller'].update(token_sha256='not-a-digest'))
-        altered(lambda v:v['media-controller'].update(scopes=[]))
+        altered(lambda v:v['media-controller'].update(scopes=None))
         altered(lambda v:v['media-controller']['scopes'][0].pop('source_id'))
         altered(lambda v:v['media-controller']['scopes'][0].update(session_id='*'))
         altered(lambda v:v['media-controller']['scopes'][0].update(extra='unexpected'))

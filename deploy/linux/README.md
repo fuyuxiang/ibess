@@ -1,5 +1,9 @@
 > 当前版本统一采用仓库根构建上下文、共享包和 API 版本迁移。旧的独立建表流程已委托或改为检查；请先阅读 [开发与交付](../../docs/development.md) 和 [数据库迁移](../../docs/architecture/database.md)。下文保留可选部署组件的操作说明。
 
+`0006_preparation` 使现场机位与区域可按版本复用，既有场次保持原配置。场次在业务“场次管理”中创建并准备；消费者接入改用 `python3 scripts/configure_phase_consumer.py --session-id <场次UUID>`，详见[场次流程](../../docs/session-workflow.md#部署人员接入阶段消费者)。
+
+当前数据库目标为 `0006_preparation`。更新时同步重建 API、前端与消费者镜像，先执行 API 迁移，再启动消费者。新场次的人员资料默认选填，人脸身份核查由管理员在开场前按需启用；存量已开始场次保留原模式及全部身份、授权历史。
+
 # Linux 服务器部署手册
 
 目标机：Ubuntu 22.04 LTS，Docker 28.0.4 + Compose v2.34.0，root 权限。
@@ -41,6 +45,8 @@ cp deploy/linux/.env.example .env
 vi .env      # 至少改 POSTGRES_PASSWORD、MINIO_ROOT_PASSWORD、PHASE_CONTROL_TOKEN_EVENT_SERVICE
 chmod 600 .env
 ```
+
+新安装推荐直接运行 `python3 scripts/init_env.py` 生成随机凭据及本机消费者摘要文件。已有安装保留原 `.env`；新场次的精确消费者范围接入见 [场次流程说明](../../docs/session-workflow.md#部署人员接入阶段消费者)。
 
 `SEMANTIC_MODEL_API_KEY` 不填也能跑：语义复核会自动降级为规则兜底，其他功能不受影响。
 

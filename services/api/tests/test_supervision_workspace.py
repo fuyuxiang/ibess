@@ -298,6 +298,25 @@ class WorkspaceTest(SupervisionTest):
                     self.assertEqual(archive.read('audio/original.wav'),(Path(directory)/(rid+'.wav')).read_bytes())
 
 
+    def test_archive_directory_excludes_interim_reports_and_chooses_latest_formal_version(self):
+        from app.supervision_models import SupervisionSessionReport
+        _,_,_,sid=self.bound_event()
+        _,_,_,other=self.bound_event()
+        official=str(uuid.uuid4())
+        now=datetime.utcnow()
+        with self.Session.begin() as db:
+            for report_id,session_id,kind,at in [(official,sid,'归档监管记录',now-timedelta(minutes=1)),
+                    (str(uuid.uuid4()),sid,'查阅快照',now),(str(uuid.uuid4()),other,'查阅快照',now)]:
+                db.add(SupervisionSessionReport(report_id=report_id,session_id=session_id,actor='test',
+                    created_at=at,snapshot={'report_type':kind}))
+        response=self.client.get('/api/supervision/sessions?archived_only=true')
+        self.assertEqual(response.status_code,200,response.text)
+        items=response.json()['items']
+        self.assertTrue(any(s['session_id']==sid and s['latest_report']['report_id']==official for s in items))
+        self.assertFalse(any(s['session_id']==other for s in items))
+        self.assertEqual(self.client.get('/api/supervision/reports/'+official).status_code,200)
+
+
 def load_tests(loader,tests,pattern):
     return unittest.TestSuite(WorkspaceTest(name) for name in WorkspaceTest.__dict__ if name.startswith('test_'))
 

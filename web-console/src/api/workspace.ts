@@ -18,6 +18,7 @@ export interface SessionItem {
 }
 export interface SessionReport {
   report_id:string;at:string;actor:string;snapshot:{session_name:string;project_name:string;room_name:string;report_type:string;started_at:string;ended_at:string;
+    preparation_snapshot?:{scheme?:string;version?:number}|null;archive_note?:string;evidence_gap_note?:string;identity_verification_enabled?:boolean;session_journal?:{journal_id:string;at:string;actor:string;note:string}[];
     unresolved:number;notice:string;events:{event_id:string;reason:string;workflow_status:string;resolution:string|null}[];
     coverage:{source_id:string;name:string;metric:string;samples:number;intervals:{started_at:string;ended_at:string;status:string;seconds:number}[]}[]};
 }
@@ -28,4 +29,9 @@ export async function downloadWorkspace(path:string,filename:string){
 }
 export function beijingInput(value:string|null|undefined){return value?new Date(Date.parse(value)+8*3600000).toISOString().slice(0,19):'';}
 export function beijingIso(value:string){if(!value)throw Error('请填写北京时间');const date=new Date(value+'+08:00');if(!Number.isFinite(date.getTime()))throw Error('时间格式无效');return date.toISOString();}
-export const healthLabels:Record<string,string>={online:'画面可连接',offline:'不可用',running:'近期收到分析结果',recent:'近期有媒体活动',stale:'近期无录像活动',unknown:'待核验',input_error:'分析输入异常',not_applicable:'不适用',unconfigured:'未配置'};
+export const healthLabels:Record<string,string>={online:"可连接",offline:'不可用',running:"近期有分析结果",recent:"近期有媒体记录",stale:"近期无录像记录",unknown:'待核验',input_error:'分析输入异常',not_applicable:'不适用',unconfigured:'未配置'};
+
+// Keep historical report data intact; only shorten the previous generated help text.
+export function coverageNotice(notice:string):string {
+  return notice === '状态记录为每30秒采样，单次有效期最多60秒；未采样、未接入或无有效回执均为待核验。近期录像活动不等于全程完整。无预警不代表现场无异常。' ? '每 30 秒采样，状态有效期最长 60 秒。缺少有效记录的区间标为待核验；录像完整性和现场情况需结合证据核查。' : notice
+}

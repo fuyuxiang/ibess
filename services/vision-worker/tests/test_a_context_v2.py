@@ -20,6 +20,7 @@ SCHEMA = [
     "CREATE TABLE business_authorization_entries (entry_id TEXT, snapshot_id TEXT, person_id TEXT, seat_id TEXT, identity_verified BOOLEAN)",
     "CREATE TABLE phase_bindings (binding_id TEXT, session_id TEXT, source_id TEXT, active BOOLEAN)",
     "CREATE TABLE eval_sessions (session_id TEXT, status TEXT)",
+    "CREATE TABLE supervision_session_workflows (session_id TEXT, identity_verification_enabled BOOLEAN)",
     "CREATE TABLE business_attendance_facts (fact_id TEXT, room_id TEXT, fact_type TEXT, person_id TEXT, seat_id TEXT, occurred_at TIMESTAMP, payload TEXT)",
 ]
 NOW = datetime.now(timezone.utc)
@@ -94,6 +95,17 @@ class DbContextTest(unittest.TestCase):
         self.insert("UPDATE eval_sessions SET status = 'running'")
         self.insert("UPDATE phase_bindings SET active = 0")
         self.assertIsNone(self.source().load("camera-007").snapshot, "绑定失效：不算 bound")
+
+    def test_optional_identity_keeps_spatial_context_and_seat_permits(self):
+        self.test_full_context()
+        self.insert("INSERT INTO supervision_session_workflows VALUES ('sess-1',0)")
+        ctx = self.source().load('camera-007')
+        self.assertFalse(ctx.identity_verification_enabled)
+        self.assertFalse(ctx.seat_identities)
+        self.assertTrue(ctx.zone_config['zones'])
+        self.assertEqual(ctx.authorizations[0]['scope'], {'seat_id': 'seat-1'})
+        self.insert("UPDATE supervision_session_workflows SET identity_verification_enabled=1")
+        self.assertEqual(self.source().load('camera-007').seat_identities['seat-1']['person_id'], 'p-1')
 
     def test_background_refresh_never_blocks(self):
         import threading

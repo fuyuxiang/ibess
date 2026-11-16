@@ -10,6 +10,9 @@ from app.core.supervision import channel
 from app.core.supervision_evidence import utc_naive, session_channels
 
 
+COVERAGE_NOTICE = '每 30 秒采样，状态有效期最长 60 秒。缺少有效记录的区间标为待核验；录像完整性和现场情况需结合证据核查。'
+LEGACY_COVERAGE_NOTICE = '状态记录为每30秒采样，单次有效期最多60秒；未采样、未接入或无有效回执均为待核验。近期录像活动不等于全程完整。无预警不代表现场无异常。'
+
 def source_health(db,configured):
     now=datetime.utcnow()
     signals={(s.session_id,s.source_id,s.kind):s for s in db.query(SupervisionSignal).all()}
@@ -116,8 +119,8 @@ def build_session_report(db,session):
         'project_id':project.project_id,'project_name':project.name,'room_id':room.room_id,'room_name':room.name,
         'started_at':iso_utc(start),'ended_at':iso_utc(end),'channels':[{**s,'created_at':iso_utc(s['created_at'])} for s in channels],
         'events':events,'coverage':coverage,'unresolved':sum(e['workflow_status']!='ARCHIVED' for e in events),
-        'notice':'状态记录为每30秒采样，单次有效期最多60秒；未采样、未接入或无有效回执均为待核验。近期录像活动不等于全程完整。无预警不代表现场无异常。',
-        'report_type':'最终场次记录' if session.status=='closed' else '进行中场次快照'}
+        'notice':COVERAGE_NOTICE,
+        'report_type':'现场结束记录（待归档核验）' if session.status=='closed' else '进行中场次快照'}
 
 
 def report_html(report):
@@ -129,19 +132,37 @@ def report_html(report):
         return datetime.fromisoformat(value.replace('Z','+00:00')).astimezone(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
     def table(headers,rows):
         return '<table><thead><tr>'+''.join('<th>'+txt(h)+'</th>' for h in headers)+'</tr></thead><tbody>'+''.join('<tr>'+''.join('<td>'+txt(c)+'</td>' for c in row)+'</tr>' for row in rows)+'</tbody></table>'
-    status={'online':'画面可连接','offline':'不可用','running':'近期收到分析结果','recent':'近期有媒体活动','stale':'近期无录像活动',
+    status={'online':'画面可连接','offline':'不可用','running':'近期有分析结果','recent':'近期有媒体记录','stale':'近期无录像记录',
         'unknown':'待核验','input_error':'分析输入异常','not_applicable':'不适用','unconfigured':'未配置'}
-    metrics={'stream_status':'画面连接','recording_status':'录像活动','analysis_status':'分析回执','audio_status':'语音输入观察'}
-    body=f'<h1>智能评标监管系统 · 场次监管记录</h1><p>{txt(data["report_type"])} · 编号 {txt(report.report_id)}</p>'
+    metrics={'stream_status':'视频连接','recording_status':'录像状态','analysis_status':'分析状态','audio_status':'语音输入'}
+    evidence_status={'READY':'证据已保全','PARTIAL':'录像保全不完整','PENDING':'录像保全中',
+        'UNAVAILABLE':'证据不可用','NOT_APPLICABLE':'模拟数据，无现场证据'}
+    journal_names={'preparation':'评前准备','start':'开始监管','phase':'阶段推进','patrol':'现场巡查',
+        'handover':'值守交接','finish':'结束监管','archive':'归档确认','supplement':'补充记录','permit':'临时许可'}
+    body=f'<h1>衡鉴 HengJian · 场次报告</h1><p>{txt(data["report_type"])} · 编号 {txt(report.report_id)}</p>'
     body+=table(['项目','评标室','场次','监管时段（北京时间）','生成账号'],[[data['project_name'],data['room_name'],data['session_name'],stamp(data['started_at'])+' — '+stamp(data['ended_at']),report.actor]])
-    body+='<h2>监测范围与覆盖核验</h2><p class="notice">'+txt(data['notice'])+'</p>'
+    if isinstance(data.get('identity_verification_enabled'), bool):
+        body+='<p>人员身份核查：'+('已启用' if data['identity_verification_enabled'] else '未启用')+'</p>'
+    if data.get('preparation_snapshot'):
+        from app.application.monitoring_profiles import PROFILE_LABELS
+        preparation=data['preparation_snapshot']
+        body+='<p>监测方案：'+txt(PROFILE_LABELS.get(preparation.get('scheme'),'既有监测方案'))
+        if preparation.get('version'):
+            body+=' · 现场资源版本：'+txt(preparation['version'])
+        body+='</p>'
+    body+='<h2>监测覆盖情况</h2><p class="notice">'+txt(COVERAGE_NOTICE if data['notice']==LEGACY_COVERAGE_NOTICE else data['notice'])+'</p>'
     rows=[]
     for item in data['coverage']:
         for interval in item['intervals']:
             rows.append([item['name']+' / '+item['source_id'],metrics[item['metric']],stamp(interval['started_at']),stamp(interval['ended_at']),status.get(interval['status'],interval['status'])])
     body+=table(['来源','核验项目','开始','结束','状态'],rows) if rows else '<p>未登记监测来源，覆盖情况待核验。</p>'
-    body+='<h2>事件与人工办理记录</h2>'
-    body+=table(['事件编号','线索描述','来源','发生时间','流程状态','人工结论','责任/接收','归档时间'],[[e['event_id'],e['reason'],e['camera_id'],stamp(e['occurred_at']),STATE_LABELS.get(e['workflow_status'],e['workflow_status']),RESOLUTION_LABELS.get(e['resolution'],'尚未认定'),(e['assignee'] or '未分派')+' / '+((e.get('task_receipt') or {}).get('received_by') or '未登记接收'),stamp(e['archived_at'])] for e in data['events']]) if data['events'] else '<p>本场次未记录预警事件；请结合以上监测覆盖情况解释。</p>'
-    body+='<h2>历次归档及资料缺失说明</h2>'+table(['事件编号','流程版本','人工结论','归档账号','归档资料状态','资料缺失说明'],[[e['event_id'],a['version'],RESOLUTION_LABELS.get(a['resolution'],'未记录'),a['actor'],a['evidence_status'],a['evidence_note']] for e in data['events'] for a in e['archives']])
-    body+=f'<p>未办结事件：{data["unresolved"]} 条。生成时间：{stamp(report.created_at.replace(tzinfo=timezone.utc).isoformat())}（北京时间）。</p><p>本记录为系统生成快照；原始媒体、关联依据及人工操作应结合事件证据包查阅。</p>'
-    return '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>场次监管记录</title><style>body{font:14px/1.7 system-ui,sans-serif;color:#20344a;margin:32px}h1{font-size:24px}h2{font-size:18px;margin-top:28px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;overflow-wrap:anywhere}th{background:#eef3f8}.notice{padding:12px;background:#fff8df}@media print{body{margin:0}tr{break-inside:avoid}thead{display:table-header-group}}@page{size:A4 landscape;margin:16mm}</style>'+body+'</html>'
+    body+='<h2>告警与处置记录</h2>'
+    body+=table(['事件编号','线索描述','来源','发生时间','处理状态','人工结论','责任/接收','归档时间'],[[e['event_id'],e['reason'],e['camera_id'],stamp(e['occurred_at']),STATE_LABELS.get(e['workflow_status'],e['workflow_status']),RESOLUTION_LABELS.get(e['resolution'],'尚未认定'),(e['assignee'] or '未分派')+' / '+((e.get('task_receipt') or {}).get('received_by') or '待接收'),stamp(e['archived_at'])] for e in data['events']]) if data['events'] else '<p>本报告无告警记录，现场情况请结合监测覆盖核查。</p>'
+    body+='<h2>历次归档及资料缺失说明</h2>'+table(['事件编号','流程版本','人工结论','归档账号','归档资料状态','资料缺失说明'],[[e['event_id'],a['version'],RESOLUTION_LABELS.get(a['resolution'],'未记录'),a['actor'],evidence_status.get(a['evidence_status'],'待核验'),a['evidence_note']] for e in data['events'] for a in e['archives']])
+    if data.get('archive_note'):
+        body+='<h2>归档确认</h2><p>'+txt(data['archive_note'])+'</p>'
+        if data.get('evidence_gap_note'):body+='<p class="notice">资料缺失与覆盖说明：'+txt(data['evidence_gap_note'])+'</p>'
+    if data.get('session_journal'):
+        body+='<h2>场次操作记录</h2>'+table(['记录类型','时间','记录账号','内容'],[[journal_names.get(j['kind'],'操作记录'),stamp(j['at']),j['actor'],j['note']] for j in reversed(data['session_journal'])])
+    body+=f'<p>未办结事件：{data["unresolved"]} 条。生成时间：{stamp(report.created_at.replace(tzinfo=timezone.utc).isoformat())}（北京时间）。</p><p>本报告按生成时的记录归集，完整证据与处置详情请查阅事件档案。</p>'
+    return '<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>场次报告</title><style>body{font:14px/1.7 system-ui,sans-serif;color:#20344a;margin:32px}h1{font-size:24px}h2{font-size:18px;margin-top:28px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;overflow-wrap:anywhere}th{background:#eef3f8}.notice{padding:12px;background:#fff8df}@media print{body{margin:0}tr{break-inside:avoid}thead{display:table-header-group}}@page{size:A4 landscape;margin:16mm}</style>'+body+'</html>'

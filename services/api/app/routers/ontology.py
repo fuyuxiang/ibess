@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -280,7 +280,7 @@ def list_operators(enabled: bool | None = None, db: DbSession = Depends(get_sess
     query = db.query(Operator).order_by(desc(Operator.id))
     if enabled is not None:
         query = query.filter(Operator.enabled == enabled)
-    from datetime import datetime, timedelta
+    from datetime import datetime, timezone, timedelta
     from app.supervision_models import OperatorApplication
     receipt = db.get(OperatorApplication, 'event-service')
     from app.supervision_models import SupervisionSignal
@@ -349,6 +349,9 @@ def update_operator(operator_id: str, body: OperatorPatch, request: Request, db:
     if 'input_types' in changes and not isinstance(changes['input_types'],list):
         raise HTTPException(422, '输入类型必须为列表')
     before = _operator_dict(operator)
+    if changes and 'version' not in changes:
+        # Version identifies each saved configuration; old explicit clients remain supported.
+        changes['version'] = 'v' + datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')
     for key, value in changes.items():
         setattr(operator, key, value)
     db.flush()

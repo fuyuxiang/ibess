@@ -53,6 +53,7 @@ class RuleContext:
     authorizations: list = field(default_factory=list)
     exceptions: list = field(default_factory=list)
     loaded_at: float = 0.0
+    identity_verification_enabled: bool = True  # Legacy unmanaged sessions keep their configured behavior.
 
     @property
     def scope(self) -> dict:
@@ -177,6 +178,10 @@ class DbContextSource:
                 ctx.snapshot["rule_versions"] = dict(_json(snap["rule_versions"], {}))
                 ctx.snapshot["exceptions"] = list(_json(snap["exceptions"], []))
                 ctx.snapshot['source_id'] = source_id
+                configured = conn.execute(text(
+                    "SELECT identity_verification_enabled FROM supervision_session_workflows WHERE session_id=:sid"),
+                    {'sid': snap['session_id']}).first()
+                ctx.identity_verification_enabled = bool(configured[0]) if configured else True
             # 有快照时区域配置必须是同一场次的；没有快照时取本源最新的一份（只用于 inside 等区域事实）
             zone_sql = ("SELECT session_id, project_id, room_id, source_id, config_version, zones, entry_lines FROM source_zone_configs "
                         "WHERE supervision_channel(source_id) = supervision_channel(:s)" + (" AND session_id = :sess" if snap else "") + " ORDER BY updated_at DESC LIMIT 1")
@@ -197,7 +202,7 @@ class DbContextSource:
                         "SELECT e.seat_id, e.person_id, e.identity_verified FROM business_authorization_entries e "
                         "JOIN business_authorization_snapshots s ON s.snapshot_id = e.snapshot_id "
                         "WHERE s.room_id = :r AND s.status = 'active' AND e.seat_id IS NOT NULL"), {"r": room_id}).mappings():
-                    if row["identity_verified"]:
+                    if ctx.identity_verification_enabled and row["identity_verified"]:
                         ctx.seat_identities[str(row["seat_id"])] = {"person_id": str(row["person_id"]), "verified": True}
                 permits = [dict(r) for r in conn.execute(text(
                     "SELECT fact_id, person_id, seat_id, occurred_at, payload FROM business_attendance_facts "

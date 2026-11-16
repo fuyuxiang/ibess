@@ -34,7 +34,7 @@ class SchemaMigrationTest(unittest.TestCase):
         upgrade_schema(self.engine)
         verify_schema(self.engine)
         upgrade_schema(self.engine)
-        self.assertEqual(set(inspect(self.engine).get_table_names()), {t["name"] for t in self.baseline} | {"alembic_version"})
+        self.assertEqual(set(inspect(self.engine).get_table_names()), {t["name"] for t in self.baseline} | {"supervision_session_workflows", "supervision_session_journal", "room_monitoring_presets", "alembic_version"})
 
     def legacy(self, omit=()):
         omitted = {"description", "created_at", "updated_at", "phase_id", *omit}
@@ -89,3 +89,27 @@ class SchemaMigrationTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             require_schema(self.engine, ("events", "evidences"))
         self.assertEqual(inspect(self.engine).get_table_names(), [])
+
+    def test_optional_identity_upgrade_preserves_existing_sessions_and_audit_data(self):
+        from alembic import command
+        from alembic.config import Config
+        from app.migrations import upgrade_schema, verify_schema
+        config=Config(str(Path(__file__).resolve().parents[1]/'alembic.ini'))
+        with self.engine.begin() as db:
+            config.attributes['connection']=db
+            command.upgrade(config,'0004_workflows')
+            for state in ('draft','running','closed'):
+                db.execute(text("INSERT INTO eval_sessions(session_id,name,status) VALUES (:id,:id,:state)"),{'id':state,'state':state})
+                db.execute(text("""INSERT INTO supervision_session_workflows(session_id,version,checks,phase_plans,created_at,updated_at)
+                    VALUES (:id,7,CAST(:checks AS jsonb),'{}',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"""),
+                    {'id':state,'checks':json.dumps({'identity_checked':{'confirmed':True}})})
+                db.execute(text("""INSERT INTO supervision_session_journal(journal_id,session_id,kind,note,actor,detail,created_at)
+                    VALUES (:id,:id,'preparation','原始身份核验记录','original-admin','{}',CURRENT_TIMESTAMP)"""),{'id':state})
+        upgrade_schema(self.engine)
+        verify_schema(self.engine)
+        with self.engine.connect() as db:
+            flags=dict(db.execute(text('SELECT session_id,identity_verification_enabled FROM supervision_session_workflows')).all())
+            self.assertEqual(flags,{'draft':False,'running':True,'closed':True})
+            self.assertEqual(db.scalar(text('SELECT count(*) FROM supervision_session_journal')),3)
+            self.assertEqual(db.scalar(text("SELECT version FROM supervision_session_workflows WHERE session_id='draft'")),7)
+            self.assertTrue(db.scalar(text("SELECT checks FROM supervision_session_workflows WHERE session_id='draft'"))['identity_checked']['confirmed'])

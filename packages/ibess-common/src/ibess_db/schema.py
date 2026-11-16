@@ -2,7 +2,7 @@
 
 from sqlalchemy import inspect, text
 
-SCHEMA_HEAD = "0003_scope"
+SCHEMA_HEAD = "0006_preparation"
 
 
 def require_schema(engine, tables=()):

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="mark-title mark-description">
+  <title id="mark-title">衡鉴 HengJian 品牌标识</title>
+  <desc id="mark-description">对称立柱与青绿中梁组成 H 形，深海军蓝护盾代表现场守护，底部白色折线代表记录与复核。</desc>
+  <path d="M32 5 54 14v17c0 12-7.8 21.1-22 28C17.8 52.1 10 43 10 31V14Z" fill="#11243a" stroke="#23b3a5" stroke-width="2.8" stroke-linejoin="round"/>
+  <path d="M22 21v17m20-17v17" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M22 29h20" fill="none" stroke="#23b3a5" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="m26 44 6 4 6-4" fill="none" stroke="#fff" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

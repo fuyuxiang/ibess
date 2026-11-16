@@ -9,7 +9,7 @@ from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, StringConstraints, field_validator
+from pydantic import BaseModel, ConfigDict, StringConstraints, field_validator, model_validator
 from sqlalchemy.orm import Session, joinedload
 
 from app.business_facts_models import BusinessAttendanceFact
@@ -28,6 +28,7 @@ class FactIn(BaseModel):
     fact_type: Literal["check_in", "check_out", "change", "leave_permit", "clarification"]
     project_id: UUID
     room_id: UUID
+    session_id: UUID | None = None
     person_id: UUID | None = None
     seat_id: UUID | None = None
     phase_id: PhaseId | None = None
@@ -47,12 +48,27 @@ class FactIn(BaseModel):
     def validate_payload(cls, value):
         if value is None:
             return None
-        unknown = set(value) - {"replaced_person_id", "question", "answer", "permit_scope", "permit_until", "supplement"}
+        unknown = set(value) - {"replaced_person_id", "question", "answer", "permit_scope", "permit_until", "supplement", "authorization_kind", "valid_until"}
         if unknown:
             raise ValueError(f"事实负载包含未声明字段：{'、'.join(sorted(unknown))}")
         if any(item is not None and not isinstance(item, str) for item in value.values()):
             raise ValueError("事实负载字段必须为字符串")
         return value
+
+
+    @model_validator(mode='after')
+    def validate_authorization(self):
+        payload=self.payload or {}
+        if 'authorization_kind' in payload or 'valid_until' in payload:
+            if self.fact_type!='clarification' or payload.get('authorization_kind') not in ('contact_allowed','document_access','photo_allowed','device_allowed','break'):
+                raise ValueError('临时许可类型无效，且只能登记为澄清事实')
+            try:
+                until=datetime.fromisoformat(payload['valid_until'].replace('Z','+00:00'))
+                if until.tzinfo is None or until<= (self.occurred_at or datetime.now(timezone.utc)):
+                    raise ValueError
+            except (KeyError,ValueError,TypeError):
+                raise ValueError('临时许可必须有晚于发生时间且带时区的有效期') from None
+        return self
 
 
 def _actor(request: Request):
@@ -86,10 +102,18 @@ def _serialize(fact: BusinessAttendanceFact, session: Session) -> dict:
     return result
 
 
-def save_fact(body: FactIn, session: Session, actor: str) -> dict:
-    room = _find(session, BusinessRoom, body.room_id, "评标室不存在")
+def save_fact(body: FactIn, session: Session, actor: str, *, commit=True) -> dict:
+    if body.session_id:
+        from app.models import EvalSession
+        session.query(EvalSession).filter_by(session_id=str(body.session_id)).with_for_update().first()
+    room = session.query(BusinessRoom).filter_by(room_id=str(body.room_id)).with_for_update().first()
+    if room is None:
+        raise HTTPException(422, "评标室不存在")
     if str(room.project_id) != str(body.project_id):
         raise HTTPException(422, "事实所属项目与评标室不一致")
+    if body.session_id:
+        from app.routers.rosters import session_scope
+        session_scope(session, room, body.session_id, writing=True)
     _find(session, BusinessProject, body.project_id, "项目不存在")
     person = None
     if body.person_id is not None:
@@ -122,7 +146,8 @@ def save_fact(body: FactIn, session: Session, actor: str) -> dict:
         occurred_at=body.occurred_at or datetime.now(timezone.utc), note=body.note,
         payload=payload, actor=actor, created_at=datetime.now(timezone.utc))
     session.add(fact)
-    session.commit()
+    if commit:session.commit()
+    else:session.flush()
     session.refresh(fact)
     result = _serialize(fact, session)
     result["replaced_person_name"] = replaced_name
@@ -161,10 +186,17 @@ def get_fact(fact_id: UUID, session: Session = Depends(get_session)):
 
 
 @router.delete("/facts/{fact_id}")
-def delete_fact(fact_id: UUID, session: Session = Depends(get_session)):
+def delete_fact(fact_id: UUID, session_id: UUID | None = None, session: Session = Depends(get_session)):
+    if session_id:
+        from app.models import EvalSession
+        session.query(EvalSession).filter_by(session_id=str(session_id)).with_for_update().first()
     fact = session.get(BusinessAttendanceFact, str(fact_id))
     if fact is None:
         raise HTTPException(404, "业务事实不存在")
+    room = session.query(BusinessRoom).filter_by(room_id=fact.room_id).with_for_update().first()
+    if session_id:
+        from app.routers.rosters import session_scope
+        session_scope(session, room, session_id, writing=True)
     session.delete(fact)
     session.commit()
     return {"ok": True}

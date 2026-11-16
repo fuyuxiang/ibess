@@ -102,15 +102,35 @@ class CameraFactsTest(unittest.TestCase):
         from types import SimpleNamespace
         now=time.time()
         rc=RuleContext(snapshot={'project_id':'p','room_id':'r','session_id':'s','stage_snapshot_id':'snap',
-                    'phase_id':'DETAIL','phase_version':1},loaded_at=now)
+                    'phase_id':'DETAIL','phase_version':1},loaded_at=now,identity_verification_enabled=False)
         pipeline=CorePipeline('cam1',SimpleNamespace(get=lambda:rc))
-        pipeline.review.outbox.put((now-5, {**rc.scope,'generation':('s','run','DETAIL',1,None),
+        pipeline.review.outbox.put((now-5, {**rc.scope,'generation':('s','run','DETAIL',1,None,False),
             'base':{'bound':True,'quality':'clear','phase_id':'DETAIL','media_run_id':'run'}},
             [{'kind':'whispering'}], 'original.jpg', [{'at':now-5,'jpeg':b'capture'}]))
         updates=pipeline.on_frame(np.zeros((80,80,3),dtype=np.uint8),[],'run',now)
         self.assertEqual(updates[0]['occurred_at'],now-5)
         self.assertEqual(updates[0]['payload']['frame_key'],'original.jpg')
         self.assertEqual(updates[0]['capture_jpeg'],b'capture')
+
+    def test_optional_identity_does_not_run_face_matching_or_stop_spatial_observations(self):
+        import time
+        from unittest.mock import Mock
+        from types import SimpleNamespace
+        from worker.core_behaviors import CorePipeline
+        from worker.a_context import RuleContext
+        now = time.time()
+        rc = RuleContext(snapshot={'project_id':'p','room_id':'r','session_id':'s',
+            'stage_snapshot_id':'snap','phase_id':'DETAIL','phase_version':1},
+            zone_config={'zones':[{'kind':'seat','seat_id':'seat-1','zone_id':'z1',
+                'polygon':[[0,0],[1,0],[1,1],[0,1]]}]},
+            loaded_at=now, identity_verification_enabled=False)
+        identity = Mock(status='ready')
+        pipeline = CorePipeline('cam1', SimpleNamespace(get=lambda:rc), identity=identity)
+        updates = pipeline.on_frame(np.zeros((80,80,3),dtype=np.uint8),
+            [{'track_id':'t1','bbox':[.2,.2,.6,.8]}], 'run', now)
+        identity.check.assert_not_called()
+        self.assertEqual(updates[-1]['payload']['capabilities']['entrance'], 'not_enabled')
+        self.assertTrue(updates[-1]['payload']['seats'])
 
     def test_delayed_entrance_result_keeps_original_frame_and_separate_observation(self):
         import time

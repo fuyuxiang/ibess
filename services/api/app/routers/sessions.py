@@ -198,6 +198,9 @@ def get_timeline(session_id: str, response: Response, actor: str = Depends(_admi
 @router.post("/sessions/{session_id}/start")
 def start_session(session_id: str, actor: str = Depends(_admin), db: DbSession = Depends(get_db)):
     s = _find_session(session_id, db, lock=True)
+    from app.session_workflow_models import SessionWorkflow
+    if db.get(SessionWorkflow, session_id):
+        raise HTTPException(409, '此场次已纳入监管流程，请从监管场次工作区执行操作')
     if s.status == 'closed':
         db.rollback()
         raise HTTPException(409, {'code':'SESSION_CLOSED','message':'已关闭场次不能重新打开'})
@@ -212,6 +215,9 @@ def start_session(session_id: str, actor: str = Depends(_admin), db: DbSession =
 @router.post("/sessions/{session_id}/stop")
 def stop_session(session_id: str, actor: str = Depends(_admin), db: DbSession = Depends(get_db)):
     s = _find_session(session_id, db, lock=True)
+    from app.session_workflow_models import SessionWorkflow
+    if db.get(SessionWorkflow, session_id):
+        raise HTTPException(409, '此场次已纳入监管流程，请从监管场次工作区执行操作')
     if s.status == 'closed':
         return _session_dict(s)
     s.status = "closed"

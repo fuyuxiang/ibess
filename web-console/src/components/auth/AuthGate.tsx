@@ -17,7 +17,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const location = useLocation()
   useEffect(() => { if (!useAuthStore.getState().checked) void check() }, [check])
 
-  if (!checked) return <main className="auth-screen"><Card className="auth-state-card"><SafetyCertificateOutlined className="auth-state-icon" /><h1>智能评标监管系统</h1>{error ? <><Alert type="error" showIcon message="暂时无法检查登录状态" description={error} /><Button type="primary" icon={<ReloadOutlined />} loading={loading} onClick={() => void check()}>重试</Button></> : <div role="status" className="auth-checking"><Spin /><p>正在检查登录状态…</p></div>}</Card></main>
+  if (!checked) return <main className="auth-screen"><Card className="auth-state-card"><SafetyCertificateOutlined className="auth-state-icon" /><h1>衡鉴 · 智能评标现场监管平台</h1>{error ? <><Alert type="error" showIcon message="登录状态暂不可用，请重试" description={error} /><Button type="primary" icon={<ReloadOutlined />} loading={loading} onClick={() => void check()}>重试</Button></> : <div role="status" className="auth-checking"><Spin /><p>正在验证登录状态…</p></div>}</Card></main>
   if (location.pathname === '/login') {
     if (user) return <Navigate replace to={safeReturnTo(new URLSearchParams(location.search).get('returnTo'))} />
     return <Login />

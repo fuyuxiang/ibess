@@ -123,7 +123,7 @@ services:
       AUDIT_VIDEO_ROOT: /video-evidence
     volumes:
       - ${POC_VIDEO_DIR:-./private_assets/videos}:/video-evidence:ro
-      - ./config/phase-consumers.json:/run/phase-consumers.json:ro
+      - ${PHASE_CONTROL_CONSUMERS_PATH:-./config/phase-consumers.json}:/run/phase-consumers.json:ro
       - media-recordings:/recordings:ro
       - supervision-evidence:/supervision-evidence
       - ./models/face:/face-models:ro

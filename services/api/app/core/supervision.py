@@ -22,8 +22,8 @@ TRANSITIONS = {
 ACTION_LABELS = {'confirm': '确认异常', 'supplement': '补充核查', 'dismiss': '排除并归档',
                  'assign': '登记处置任务', 'feedback': '提交处置反馈', 'return': '退回继续处置', 'archive': '复核归档', 'reopen':'重新核查 / 更正认定'}
 TECHNICAL_TYPES = ('camera_blacked', 'video_offline', 'audio_offline', 'camera_occlusion', 'stream_gap', 'recording_gap')
-STATE_LABELS = {'PENDING':'待确认','SUPPLEMENT':'补充核查中','CONFIRMED':'待登记处置','ASSIGNED':'待处置反馈','FEEDBACK':'待复核','ARCHIVED':'已归档','LEGACY_CLOSED':'历史关闭待核查'}
-RESOLUTION_LABELS = {'confirmed':'确认异常','false_positive':'识别误报','authorized_exception':'授权例外','normal':'正常现场行为'}
+STATE_LABELS = {'PENDING':'待核查','SUPPLEMENT':'补充核查中','CONFIRMED':'待分派','ASSIGNED':'待反馈','FEEDBACK':'待复核','ARCHIVED':'已归档','LEGACY_CLOSED':'历史关闭待核查'}
+RESOLUTION_LABELS = {'confirmed':'确认异常','false_positive':'识别误报','authorized_exception':'授权例外','normal':'正常行为'}
 
 
 def technical_event(event):

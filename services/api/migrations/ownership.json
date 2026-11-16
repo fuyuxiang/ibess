@@ -473,6 +473,24 @@
       "writers": [
         "api"
       ]
+    },
+    "supervision_session_workflows": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "supervision_session_journal": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
+    },
+    "room_monitoring_presets": {
+      "schema_owner": "api",
+      "writers": [
+        "api"
+      ]
     }
   }
 }

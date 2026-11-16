@@ -79,11 +79,15 @@ def session_audio(session_id:str,db:Session=Depends(get_session)):
 
 
 @router.get('/sessions')
-def session_directory(project_id:str|None=None,keyword:str=Query('',max_length=200),page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100),db:Session=Depends(get_session)):
+def session_directory(archived_only:bool=False,project_id:str|None=None,keyword:str=Query('',max_length=200),page:int=Query(1,ge=1),page_size:int=Query(20,ge=1,le=100),db:Session=Depends(get_session)):
     from app.business_models import BusinessProject,BusinessRoom
     from app.supervision_models import SupervisionSessionReport
     query=db.query(EvalSession,PhaseBinding,BusinessProject,BusinessRoom).join(PhaseBinding,PhaseBinding.session_id==EvalSession.session_id).join(
         BusinessProject,BusinessProject.project_id==PhaseBinding.project_id).join(BusinessRoom,BusinessRoom.room_id==PhaseBinding.room_id)
+    if archived_only:
+        query=query.filter(db.query(SupervisionSessionReport.report_id).filter(
+            SupervisionSessionReport.session_id==EvalSession.session_id,
+            SupervisionSessionReport.snapshot['report_type'].astext=='归档监管记录').exists())
     if project_id:query=query.filter(PhaseBinding.project_id==project_id)
     if keyword.strip():
         from sqlalchemy import or_
@@ -92,7 +96,9 @@ def session_directory(project_id:str|None=None,keyword:str=Query('',max_length=2
     total=query.count()
     items=[]
     for session,binding,project,room in query.order_by(EvalSession.updated_at.desc()).offset((page-1)*page_size).limit(page_size):
-        last=db.query(SupervisionSessionReport).filter_by(session_id=session.session_id).order_by(SupervisionSessionReport.created_at.desc()).first()
+        reports=db.query(SupervisionSessionReport).filter_by(session_id=session.session_id)
+        if archived_only:reports=reports.filter(SupervisionSessionReport.snapshot['report_type'].astext=='归档监管记录')
+        last=reports.order_by(SupervisionSessionReport.created_at.desc()).first()
         items.append({'session_id':session.session_id,'name':session.name,'status':session.status,'phase_id':session.current_phase,
             'project_id':project.project_id,'project_name':project.name,'room_id':room.room_id,'room_name':room.name,
             'started_at':iso_utc(session.start_at or session.created_at),'ended_at':iso_utc(session.end_at),

@@ -347,6 +347,7 @@ def role_path_allowed(role,path,method):
         return path.startswith(('/api/supervision/','/api/events','/api/evidence/','/api/recordings/',
             '/api/audio/recordings','/api/registry','/api/media-bindings/','/api/authz/snapshots/')) or bool(re.fullmatch(r'/api/sessions/[^/]+/phase-config',path))
     if role=='viewer':return False
+    if re.fullmatch(r'/api/supervision/workflows/[^/]+/(checks|start|phase|finish|archive|journal|permit)',path):return role=='supervisor'
     if path=='/api/media-bindings' and method=='POST':return True
     if re.fullmatch(r'/api/audio/semantic-analyses/[^/]+/(retry|intake-retry)',path) and method=='POST':return True
     if path.startswith('/api/audio/recordings'):

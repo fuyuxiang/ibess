@@ -1,0 +1,14 @@
+[
+  {
+    "name": "supervision_session_workflows",
+    "create_sql": "\nCREATE TABLE supervision_session_workflows (\n\tsession_id VARCHAR(36) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tchecks JSONB NOT NULL, \n\tphase_plans JSONB NOT NULL, \n\tstarted_by VARCHAR(64), \n\tended_by VARCHAR(64), \n\tend_note TEXT, \n\tarchived_report_id VARCHAR(36), \n\tarchived_fingerprint VARCHAR(64), \n\tarchived_at TIMESTAMP WITHOUT TIME ZONE, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (session_id), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT, \n\tFOREIGN KEY(archived_report_id) REFERENCES supervision_session_reports (report_id) ON DELETE RESTRICT\n)\n\n",
+    "indexes": []
+  },
+  {
+    "name": "supervision_session_journal",
+    "create_sql": "\nCREATE TABLE supervision_session_journal (\n\tjournal_id VARCHAR(36) NOT NULL, \n\tsession_id VARCHAR(36) NOT NULL, \n\tkind VARCHAR(32) NOT NULL, \n\tnote TEXT NOT NULL, \n\tactor VARCHAR(64) NOT NULL, \n\tdetail JSONB NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, \n\tPRIMARY KEY (journal_id), \n\tFOREIGN KEY(session_id) REFERENCES eval_sessions (session_id) ON DELETE RESTRICT\n)\n\n",
+    "indexes": [
+      "CREATE INDEX ix_supervision_session_journal_session_id ON supervision_session_journal (session_id)"
+    ]
+  }
+]

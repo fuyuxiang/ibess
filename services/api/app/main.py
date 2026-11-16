@@ -30,10 +30,13 @@ from app import supervision_models
 from app import zone_config_models
 from app.routers import zone_config
 from app.routers import supervision
+from app.routers import session_workflow
 from app.routers import supervision_workspace
 from app.phase_control import PhaseControlPublisher
 from app.auth import AdminAuthMiddleware, router as auth_router
 from app.core.business_registry import ensure_business_seed
+from app.routers import rosters
+from app.routers import room_monitoring
 from app.routers import business_authz
 from app.routers import evidence
 from app.routers import media_bindings
@@ -120,7 +123,7 @@ def load_phase_control_consumers(required_consumers):
                 raise ValueError
             digests.add(digest)
             scopes = spec['scopes']
-            if not isinstance(scopes, list) or not scopes:
+            if not isinstance(scopes, list):
                 raise ValueError
             scope_keys = ('project_id', 'room_id', 'session_id', 'source_id')
             seen = set()
@@ -274,6 +277,7 @@ app.include_router(system.router, prefix="/api/system", tags=["system"])
 app.include_router(events.router, prefix="/api", tags=["events"])
 app.include_router(supervision.router, prefix="/api")
 app.include_router(supervision_workspace.router, prefix="/api")
+app.include_router(session_workflow.router, prefix="/api")
 app.include_router(poc.router, prefix="/api", tags=["poc-workflow"])
 app.include_router(sessions.router, prefix="/api", tags=["sessions"])
 app.include_router(ontology.router, prefix="/api", tags=["ontology"])
@@ -281,6 +285,8 @@ app.include_router(business_registry.router, prefix="/api", tags=["business-regi
 app.include_router(business_facts.router, prefix="/api", tags=["business-facts"])
 app.include_router(business_fact_links.router, prefix="/api", tags=["business-fact-links"])
 app.include_router(business_authz.router, prefix="/api", tags=["business-authz"])
+app.include_router(rosters.router, prefix="/api")
+app.include_router(room_monitoring.router, prefix="/api")
 app.include_router(evidence.router, prefix="/api", tags=["evidence-9-1"])
 app.include_router(media_bindings.router, prefix="/api", tags=["media-bindings-4-3"])
 app.include_router(video_audits.router, prefix="/api", tags=["video-audits"])

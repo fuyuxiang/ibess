@@ -19,6 +19,8 @@ MODEL_MODULES = (
     "app.phase_control_models",
     "app.semantic_models",
     "app.supervision_models",
+    "app.session_workflow_models",
+    "app.room_monitoring_models",
     "app.zone_config_models",
     "app.asset_models",
     "app.stage_media_binding_models",

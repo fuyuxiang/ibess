@@ -192,14 +192,15 @@ class CorePipeline:
         lines = (rc.zone_config or {}).get('entry_lines', [])
         fresh = bool(rc.loaded_at and time.time()-rc.loaded_at < 15)
         bound = bool(scope.get('stage_snapshot_id') and fresh)
-        generation = (scope.get('session_id'), media_run, scope.get('phase_id'), scope.get('phase_version'), (rc.zone_config or {}).get('config_version'))
+        generation = (scope.get('session_id'), media_run, scope.get('phase_id'), scope.get('phase_version'), (rc.zone_config or {}).get('config_version'), rc.identity_verification_enabled)
         if generation != self.generation or degraded or not bound:
             self.frames.clear()
             self.observer.reset()
             self.generation = generation
         capability = {'spatial': 'ready' if zones and bound else 'zones_or_binding_missing',
                       'interactions': self.review.status if bound else 'binding_missing',
-                      'entrance': getattr(self.identity, 'status', 'model_not_configured') if lines and bound else 'entry_line_or_binding_missing'}
+                      'entrance': ('not_enabled' if not rc.identity_verification_enabled else
+                          getattr(self.identity, 'status', 'model_not_configured') if lines and bound else 'entry_line_or_binding_missing')}
         if degraded:
             capability = dict.fromkeys(capability, 'camera_degraded')
         base = {'bound': bound, 'quality': 'degraded' if degraded else 'clear', 'media_run_id': media_run,
@@ -221,7 +222,7 @@ class CorePipeline:
                 visit['authorized'] = authorized(active_auths, ('contact_allowed',), scope['room_id'], {visit['home_seat_id'], visit['seat_id']})
             base.update(seats=seats, visits=visits, crossings=[{'track_id':c['track_id'],'direction':c['direction'],'line_id':c['line_id'],
                 'authorized':authorized(active_auths, ('leave_approved','break'),scope['room_id'], {self.observer.homes.get(c['track_id'])})} for c in crossings])
-            if self.identity:
+            if self.identity and rc.identity_verification_enabled:
                 entries = self.identity.check(frame, [c for c in crossings if c['direction']=='in'], {**scope, 'occurred_at': at})
                 for entry in entries:
                     jpeg = entry.pop('_capture_jpeg',None)

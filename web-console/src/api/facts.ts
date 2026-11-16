@@ -49,20 +49,22 @@ export function listFacts(projectId: string, filters: { room_id?: string; person
 }
 
 export function createFact(body: {
+  session_id?: string
   fact_type: FactType
   project_id: string
   room_id: string
   person_id?: string
   seat_id?: string
   phase_id?: string
+  occurred_at?: string
   note?: string
   payload?: Record<string, string>
 }): Promise<AttendanceFact> {
   return request('', { method: 'POST', body: JSON.stringify(body) })
 }
 
-export function deleteFact(factId: string): Promise<{ ok: boolean }> {
-  return request(`/facts/${encodeURIComponent(factId)}`, { method: 'DELETE' })
+export function deleteFact(factId: string, sessionId?: string): Promise<{ ok: boolean }> {
+  return request(`/${encodeURIComponent(factId)}${sessionId?'?session_id='+encodeURIComponent(sessionId):''}`, { method: 'DELETE' })
 }
 
 export interface FactVerificationLink {

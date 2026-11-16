@@ -54,6 +54,8 @@ class PhaseConfigTests(unittest.TestCase):
         from app.auth_models import AdminAccount, AdminAudit, AdminSession
         from app.db import get_session
         from app.routers.sessions import router
+        from app.session_workflow_models import SessionWorkflow
+        from app.supervision_models import SupervisionSessionReport
         cls.logic, cls.Project, cls.Room = phase_config, BusinessProject, BusinessRoom
         cls.EvalSession, cls.Binding, cls.Snapshot = EvalSession, PhaseBinding, PhaseSnapshot
         cls.AuthSession = AdminSession
@@ -69,7 +71,7 @@ class PhaseConfigTests(unittest.TestCase):
             c.execute(text(f'CREATE SCHEMA "{cls.schema}"'))
         try:
             cls.engine = create_engine(url, connect_args={'options': f'-csearch_path={cls.schema} -clock_timeout=5000 -cstatement_timeout=15000'})
-            cls.tables = [BusinessProject.__table__, BusinessRoom.__table__, EvalSession.__table__, PhaseBinding.__table__, PhaseSnapshot.__table__, PhaseControlOutbox.__table__, PhaseControlAck.__table__, AdminAccount.__table__, AdminAudit.__table__, AdminSession.__table__]
+            cls.tables = [SessionWorkflow.__table__, SupervisionSessionReport.__table__, BusinessProject.__table__, BusinessRoom.__table__, EvalSession.__table__, PhaseBinding.__table__, PhaseSnapshot.__table__, PhaseControlOutbox.__table__, PhaseControlAck.__table__, AdminAccount.__table__, AdminAudit.__table__, AdminSession.__table__]
             Base.metadata.create_all(cls.engine, tables=cls.tables)
             cls.Session = sessionmaker(bind=cls.engine)
             with cls.Session.begin() as db:

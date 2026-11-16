@@ -1,0 +1,7 @@
+[
+  {
+    "name": "room_monitoring_presets",
+    "create_sql": "\nCREATE TABLE room_monitoring_presets (\n\tpreset_id VARCHAR(36) NOT NULL, \n\troom_id VARCHAR(36) NOT NULL, \n\tversion INTEGER NOT NULL, \n\tscheme VARCHAR(16) NOT NULL, \n\tprimary_source_id VARCHAR(64) NOT NULL, \n\tchannels JSONB NOT NULL, \n\tcreated_by VARCHAR(64) NOT NULL, \n\tcreated_at TIMESTAMP WITH TIME ZONE NOT NULL, \n\tnote VARCHAR(500) NOT NULL, \n\tPRIMARY KEY (preset_id), \n\tCONSTRAINT room_monitoring_preset_version UNIQUE (room_id, version), \n\tFOREIGN KEY(room_id) REFERENCES business_rooms (room_id) ON DELETE RESTRICT\n)\n\n",
+    "indexes": []
+  }
+]

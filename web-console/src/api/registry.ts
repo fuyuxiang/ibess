@@ -8,7 +8,7 @@ export interface RegistryProject {
   project_id: string
   code: string
   name: string
-  owner: string
+  owner: string | null
   start_at: string | null
   end_at: string | null
   status: ProjectStatus
@@ -18,7 +18,7 @@ export interface RegistryRoom {
   project_id: string
   code: string
   name: string
-  location: string
+  location: string | null
   mode: RoomMode
   enabled: boolean
 }

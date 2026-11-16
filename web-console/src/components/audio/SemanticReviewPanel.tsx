@@ -34,13 +34,13 @@ import { semanticWindow } from './semantic-window';
 
 const conclusionMeta: Record<string, { label: string; color: string }> = {
   normal: { label: "正常", color: "green" },
-  suspected: { label: "疑似风险 · 需人工复核", color: "red" },
-  insufficient: { label: "证据不足 · 补证", color: "default" },
+  suspected: { label: "疑似风险，待核查", color: "red" },
+  insufficient: { label: "证据不足，待补充", color: "default" },
 };
 
 const sceneLabels: Record<SemanticScene, string> = {
-  S06: "S06 疑似倾向性施压",
-  S07: "S07 无权对象获取保密信息",
+  S06: "疑似倾向性施压",
+  S07: "疑似保密信息外传",
 };
 
 interface AudioRecordingItem {
@@ -49,11 +49,11 @@ interface AudioRecordingItem {
   status: string;
 }
 
-export default function SemanticReviewPanel() {
+export default function SemanticReviewPanel({initialRoomId}:{initialRoomId?:string}) {
   const readonly=useAuthStore(s=>s.user?.role)==='viewer';
   const registry = useRegistry();
   const rooms = useMemo(() => activeRooms(registry.data), [registry.data]);
-  const [roomId, setRoomId] = useState<string | undefined>(rooms[0]?.room_id);
+  const [roomId, setRoomId] = useState<string | undefined>(initialRoomId||rooms[0]?.room_id);
   const [recordings, setRecordings] = useState<AudioRecordingItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [analyses, setAnalyses] = useState<SemanticAnalysis[]>([]);
@@ -152,7 +152,7 @@ export default function SemanticReviewPanel() {
     try {
       const binding = await bindRecording(selectedId, roomId);
       setBindingRoom(binding.room_id);
-      setNotice(`录音已绑定评标室，后续研判将自动使用该室快照。`);
+      setNotice("录音已绑定评标室，后续分析使用本室授权记录。");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "绑定失败");
     } finally { setBusy(false); }
@@ -163,7 +163,7 @@ export default function SemanticReviewPanel() {
     try {
       await saveCaptureTime(selectedId,captureTime ? `${captureTime}:00+08:00` : null);
       setSavedCaptureTime(captureTime);
-      setNotice('采集起点已保存，仅用于后续新建分析；既有事件时间和归档版本保持原记录。');
+      setNotice("采集时间已保存，仅用于后续新分析，已有事件与归档记录不变。");
     } catch(e) { setError(e instanceof Error ? e.message : '采集时间保存失败'); }
     finally { setBusy(false); }
   };
@@ -195,7 +195,7 @@ export default function SemanticReviewPanel() {
       } catch {
         setSnapshot(null);
         setSnapshotError(
-          "所选评标室尚无有效授权快照（可到「业务事实」页生成）；本次研判将按未绑定输入处理，结果会诚实返回证据不足。",
+          "此评标室暂无有效授权记录，请在场次人员资料中核对；缺少依据时，分析将标记为证据不足。",
         );
         return null;
       }
@@ -291,7 +291,7 @@ export default function SemanticReviewPanel() {
           text: item.text,
         }));
       if (!segments.length) {
-        setNotice("该录音无有效转写片段，无法组装语义输入。");
+        setNotice("此录音暂无有效转写，请先完成转写。");
         return;
       }
       const binding = await getRecordingBinding(selected.recording_id);
@@ -349,7 +349,7 @@ export default function SemanticReviewPanel() {
         input,
       );
       setNotice(
-        `${scene} 任务${created.deduplicated ? "已存在（幂等去重）" : "已排队"}，完整句段窗口 ${(start/1000).toFixed(1)}–${(end/1000).toFixed(1)} 秒，结果就绪后自动刷新。`,
+        `${scene} 任务${created.deduplicated ? "已存在" : "已排队"}，分析时段 ${(start/1000).toFixed(1)}–${(end/1000).toFixed(1)} 秒，完成后自动更新结果。`,
       );
       await reloadAnalyses(selected.recording_id);
     } catch (cause) {
@@ -412,14 +412,14 @@ export default function SemanticReviewPanel() {
           onChange={setRoomId}
           style={{ width: 240 }}
           disabled={busy || Boolean(bindingRoom)}
-          placeholder="选择授权快照来源评标室"
+          placeholder="选择录音所属评标室"
           options={rooms.map((item) => ({
             value: item.room_id,
             label: roomLabel(item, registry.data),
           }))}
         />
         <label>
-          窗口起点（秒）{" "}
+          分析起点（秒）{" "}
           <InputNumber
             min={0}
             max={599}
@@ -446,23 +446,23 @@ export default function SemanticReviewPanel() {
         {bindingRoom && <Tag color="cyan">已绑定评标室</Tag>}
         {!readonly && !bindingRoom && roomId && (
           <Button size="small" onClick={() => void bindCurrent()}>
-            绑定录音到该评标室
+            绑定评标室
           </Button>
         )}
         {snapshot && (
           <Tag color="green">
-            快照 {snapshot.snapshot_id.slice(0, 8)} ·{" "}
+            授权版本 {snapshot.snapshot_id.slice(0, 8)} ·{" "}
             {snapshot.information_visibility === "confidential"
               ? "保密"
               : "公开"}{" "}
-            · {snapshot.speaker_bindings.length} 人在册
+            · {snapshot.speaker_bindings.length} 人在名单中
           </Tag>
         )}
       </div>
       <Space wrap style={{marginBottom:12}}>
-        <label>实际采集开始时间（北京时间，选填） <Input type="datetime-local" value={captureTime} disabled={readonly || busy || captureLoading || !selectedId} onChange={e=>setCaptureTime(e.target.value)} style={{width:230}}/></label>
+        <label>采集开始时间（北京时间） <Input type="datetime-local" value={captureTime} disabled={readonly || busy || captureLoading || !selectedId} onChange={e=>setCaptureTime(e.target.value)} style={{width:230}}/></label>
         <Button disabled={readonly || busy || captureLoading || !selectedId} onClick={()=>void saveTime()}>保存采集时间</Button>
-        <span>未登记时，预警标注“现场时间未登记”；上传时间不作为发生时间。</span>
+        <span>未登记时，告警发生时间显示为“现场时间未登记”。</span>
       </Space>
       {error && (
         <Alert
@@ -529,15 +529,15 @@ export default function SemanticReviewPanel() {
                     ] ?? analysis.status}
                   </Tag>
                 )}
-                {analysis.intake_error && <><Tag color="red">预警接入失败</Tag><Button size="small" disabled={readonly || busy} onClick={()=>{setBusy(true);void supervisionRequest(`/audio/semantic-analyses/${analysis.analysis_id}/intake-retry`,{method:'POST'}).then(()=>reloadAnalyses(selectedId)).catch(e=>setError(e.message)).finally(()=>setBusy(false));}}>重试预警接入</Button></>}
+                {analysis.intake_error && <><Tag color="red">告警生成失败</Tag><Button size="small" disabled={readonly || busy} onClick={()=>{setBusy(true);void supervisionRequest(`/audio/semantic-analyses/${analysis.analysis_id}/intake-retry`,{method:'POST'}).then(()=>reloadAnalyses(selectedId)).catch(e=>setError(e.message)).finally(()=>setBusy(false));}}>重试生成告警</Button></>}
                 {analysis.event_id && (
                   <Link to={`/event-detail?event_id=${analysis.event_id}`}>
-                    进入事件核查
+                    核查告警
                   </Link>
                 )}
-                {analysis.deduplicated ? <Tag>幂等去重</Tag> : undefined}
+                {analysis.deduplicated ? <Tag>已合并重复任务</Tag> : undefined}
                 <small>{formatDateTime(analysis.created_at)}</small>
-                <small>句段窗口 {(analysis.window_start_ms/1000).toFixed(1)}–{(analysis.window_end_ms/1000).toFixed(1)} 秒</small>
+                <small>分析时段 {(analysis.window_start_ms/1000).toFixed(1)}–{(analysis.window_end_ms/1000).toFixed(1)} 秒</small>
                 {analysis.status === "failed" ? (
                   <Button
                     size="small"
@@ -564,7 +564,7 @@ export default function SemanticReviewPanel() {
                   ) : undefined}
                   {analysis.result.missing_facts.length ? (
                     <p className="semantic-review-missing">
-                      缺少可信事实：{analysis.result.missing_facts.join("、")}
+                      待补充依据：{analysis.result.missing_facts.join("、")}
                     </p>
                   ) : undefined}
                 </>
@@ -584,14 +584,13 @@ export default function SemanticReviewPanel() {
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           description={
             selected
-              ? "该录音尚无分析记录，请选择风险类型开始分析。"
+              ? "暂无分析记录，请选择风险类型开始分析。"
               : "暂无已完成转写的录音。"
           }
         />
       )}
       <p style={{ color: "#7891ac", fontSize: 11, margin: "12px 0 0" }}>
-        分析依据取自所选评标室当前有效的授权记录，请核对其是否适用于录音发生时的现场。
-        未绑定评标室或缺少授权依据时会标记信息不足；疑似风险须经人工核查确认。
+        分析使用所选评标室的当前授权记录，请核对是否适用于录音发生时。缺少绑定或授权依据时标记为信息不足，疑似风险需人工核查。
       </p>
     </Card>
   );

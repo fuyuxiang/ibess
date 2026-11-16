@@ -3,6 +3,8 @@ import {
   Alert,
   Button,
   Card,
+  Collapse,
+  Descriptions,
   Form,
   Input,
   InputNumber,
@@ -15,10 +17,9 @@ import {
   message,
 } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom";
 import { supervisionRequest } from "../api/supervision";
 import { PageHeading, RequestError } from "./Supervision";
-import { riskColor, riskText } from "../utils/ui";
+import { riskColor, riskText, recognitionStatusLabels } from "../utils/ui";
 import { useRefreshingQuery } from "../components/workflow/useRefreshingQuery";
 
 interface Operator {
@@ -61,7 +62,6 @@ export default function SupervisionRules() {
   const [api, holder] = message.useMessage();
   const [form] = Form.useForm<{
     name: string;
-    version: string;
     risk_level: string;
     description: string;
     parameters: Record<string,number>;
@@ -92,7 +92,7 @@ export default function SupervisionRules() {
     setAudit([]);
     setError("");
     form.setFieldsValue({
-      ...item,
+      name:item.name, risk_level:item.risk_level,
       description: item.description || "",
       parameters: {...Object.fromEntries(item.parameter_schema.map(p=>[p.key,p.default])),...item.parameters},
     });
@@ -109,7 +109,7 @@ export default function SupervisionRules() {
       setBindings(r);
       setAudit(history);
     } catch (e) {
-      if (generation===editGeneration.current) setError(e instanceof Error ? e.message : "作用域加载失败");
+      if (generation===editGeneration.current) setError(e instanceof Error ? e.message : "适用范围读取失败，请重试");
     }
   }
   async function save() {
@@ -142,16 +142,10 @@ export default function SupervisionRules() {
     <div className="sv-page">
       {holder}
       <PageHeading
-        title="规则管理"
-        description="管理实际部署的异常行为规则、风险等级与参数，场景生效范围由场次配置控制。"
+        title="识别规则"
+        description="管理规则启停、风险等级和识别参数。"
         extra={
           <>
-            <Link to="/stages/console">
-              <Button>场次与场景配置</Button>
-            </Link>
-            <Link to="/facts">
-              <Button>业务许可与例外</Button>
-            </Link>
             <Button
               icon={<ReloadOutlined />}
               onClick={() => query.reload()}
@@ -166,15 +160,15 @@ export default function SupervisionRules() {
       <Alert
         type="info"
         showIcon
-        message="规则输出是核查线索，最终结论由监管人员确认。"
-        description="规则开关与场次启用场景共同决定运行范围；参数修改后请核对消费者应用状态与实际输出。"
+        message="识别结果需经人工核查"
+        description="规则是否生效请查看应用状态，运行异常可到运行保障检查。"
       />
-      <Card title="异常分析规则">
+      <Card title="规则列表">
         <Table
           rowKey="operator_id"
           dataSource={items}
           loading={loading}
-          scroll={{ x: 1050 }}
+          scroll={{ x: 720 }}
           columns={[
             {
               title: "规则名称",
@@ -182,11 +176,10 @@ export default function SupervisionRules() {
               render: (v: string, o: Operator) => (
                 <div className="sv-event-cell">
                   <strong>{v}</strong>
-                  <small>{o.code}</small>
+                  <small>{o.description}</small>
                 </div>
               ),
             },
-            { title: "版本", dataIndex: "version", width: 100 },
             {
               title: "风险等级",
               dataIndex: "risk_level",
@@ -195,16 +188,13 @@ export default function SupervisionRules() {
                 <Tag color={riskColor[s]}>{riskText[s] || s}</Tag>
               ),
             },
-            { title: "规则说明", dataIndex: "description", ellipsis: true },
-            { title:'消费者应用',key:'application',width:160,render:(_:unknown,o:Operator)=><Tag color={o.application_status==='applied' ? 'green' : o.application_status==='error' ? 'red' : 'gold'} title={o.application_error || undefined}>{({applied:'配置已读取',pending:'等待应用',unknown:'回执待核验',error:'应用失败',unsupported:'当前未部署'} as Record<string,string>)[o.application_status] || '待核验'}</Tag> },
-            {title:'识别来源',key:'recognition',width:240,render:(_:unknown,o:Operator)=>o.recognition_sources===undefined ? '—' : o.recognition_sources.length===0 ? <Tag color="gold">等待摄像头回执</Tag> : <Space direction="vertical">{o.recognition_sources.map(s=><Tag key={`${s.session_id}:${s.source_id}`} color={s.status==='ready'?'green':'gold'}>{s.source_id} · {({ready:'识别就绪',camera_degraded:'画面异常暂停识别',model_not_configured:'视觉模型未配置',binding_missing:'未绑定场次',zones_or_binding_missing:'区域或绑定缺失',entry_line_or_binding_missing:'入口线或绑定缺失',entry_line_missing:'入口线未配置',face_or_authorization_unverified:'人脸或授权待核验',model_or_database_unavailable:'人脸模型或数据库不可用',review_failed:'画面复核失败'} as Record<string,string>)[s.status]||'待核验'}</Tag>)}</Space>},
             {
-              title: "配置状态",
+              title: "启用状态",
               dataIndex: "enabled",
               width: 110,
               render: (v: boolean) => (
                 <Tag color={v ? "green" : "default"}>
-                  {v ? "配置启用" : "配置停用"}
+                  {v ? "已启用" : "已停用"}
                 </Tag>
               ),
             },
@@ -263,13 +253,6 @@ export default function SupervisionRules() {
           </Form.Item>
           <Space align="start">
             <Form.Item
-              name="version"
-              label="版本标识"
-              rules={[{ required: true, whitespace: true }]}
-            >
-              <Input maxLength={32} />
-            </Form.Item>
-            <Form.Item
               name="risk_level"
               label="风险等级"
               rules={[{ required: true }]}
@@ -290,10 +273,18 @@ export default function SupervisionRules() {
             rules={[{required:true,message:`请填写${p.label}`},{type:'number',min:p.min,max:p.max,message:`有效范围 ${p.min}–${p.max}`}]}>
             <InputNumber min={p.min} max={p.max} precision={p.type==='integer' ? 0 : 2} style={{width:'100%'}}/>
           </Form.Item>)}
-          {editing?.supported && !editing.parameter_schema.length && <p className="sv-muted">该规则当前没有可调参数。</p>}
-          {editing && !editing.supported && <Alert type="warning" message="当前检测服务未部署该规则，不能启用或修改执行参数。"/>}
+          {editing?.supported && !editing.parameter_schema.length && <p className="sv-muted">此规则暂无可调参数。</p>}
+          {editing && !editing.supported && <Alert type="warning" message="此规则尚未部署，部署后可启用和调整参数。"/>}
         </Form>
-        <h4>当前作用域绑定</h4>
+        <Collapse ghost items={[{key:'technical',label:"技术详情与变更记录",children:<>
+          <Descriptions size="small" column={1} items={[
+            {key:'code',label:'规则标识',children:editing?.code},
+            {key:'version',label:'当前版本',children:editing?.version},
+            {key:'receipt',label:"应用状态",children:({applied:'配置已读取',pending:'等待应用',unknown:"应用状态待核验",error:'应用失败',unsupported:"未部署"} as Record<string,string>)[editing?.application_status||'']||'待核验'},
+          ]}/>
+          {editing?.application_error&&<Alert type="warning" message={editing.application_error}/>}
+          {editing?.recognition_sources?.map(source=><p key={source.session_id+':'+source.source_id}>{source.source_id} · {recognitionStatusLabels[source.status]||'待核验'}</p>)}
+        <h4>适用范围</h4>
         {bindings.length ? (
           bindings.map((b) => (
             <p key={b.binding_id}>
@@ -303,10 +294,10 @@ export default function SupervisionRules() {
           ))
         ) : (
           <p className="sv-muted">
-            未配置显式绑定。请结合场次启用场景核对实际运行范围。
+            未单独限定范围，实际生效范围由场次方案决定。
           </p>
         )}
-        <h4>最近配置留痕</h4>
+        <h4>最近变更</h4>
         {audit.length ? (
           audit.map((a) => (
             <p key={a.id} className="sv-muted">
@@ -319,14 +310,15 @@ export default function SupervisionRules() {
                 configure: "修改配置",
                 enable: "启用规则",
                 disable: "停用规则",
-                bind: "新增作用域",
-                unbind: "移除作用域",
+                bind: "新增适用范围",
+                unbind: "移除适用范围",
               }[a.action] || a.action}
             </p>
           ))
         ) : (
-          <p className="sv-muted">暂无配置变更记录。</p>
+          <p className="sv-muted">暂无变更记录。</p>
         )}
+        </>}]} />
       </Modal>
     </div>
   );

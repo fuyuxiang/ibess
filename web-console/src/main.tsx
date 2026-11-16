@@ -5,6 +5,9 @@ import zhCN from "antd/locale/zh_CN";
 import App from "./App";
 import "./index.css";
 import "./supervision.css";
+import "./platform.css";
+import "./duty-console.css";
+import "./workspace.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -12,12 +15,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       locale={zhCN}
       theme={{
         token: {
-          colorPrimary: "#2165b4",
-          colorText: "#24364b",
-          colorTextSecondary: "#64758b",
+          colorPrimary: "#177c73",
+          colorText: "#20383f",
+          colorTextSecondary: "#71838a",
           colorBorderSecondary: "#e4eaf1",
-          colorBgLayout: "#f3f5f8",
-          borderRadius: 6,
+          colorBgLayout: "#f3f6f6",
+          borderRadius: 7,
           fontFamily: '"PingFang SC", "Microsoft YaHei", system-ui, sans-serif',
           fontSize: 14,
         },
@@ -27,7 +30,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           Menu: {
             itemHeight: 42,
             itemSelectedBg: "#eaf1fa",
-            itemSelectedColor: "#18599f",
+            itemSelectedColor: "#177c73",
           },
         },
       }}

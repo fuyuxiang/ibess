@@ -19,14 +19,14 @@ class BusinessProject(Base):
     project_id = Column(String(36), primary_key=True, default=new_id)
     code = Column(String(64), nullable=False, unique=True)
     name = Column(String(128), nullable=False)
-    owner = Column(String(128), nullable=False)
+    owner = Column(String(128), nullable=True)
     start_at = Column(DateTime(timezone=True), nullable=True)
     end_at = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(16), nullable=False, default="draft")
     __table_args__ = (
         CheckConstraint("status IN ('draft', 'running', 'closed')", name="business_project_status"),
         CheckConstraint("start_at IS NULL OR end_at IS NULL OR start_at <= end_at", name="business_project_dates"),
-        CheckConstraint("length(btrim(code)) > 0 AND length(btrim(name)) > 0 AND length(btrim(owner)) > 0", name="business_project_text"),
+        CheckConstraint("length(btrim(code)) > 0 AND length(btrim(name)) > 0 AND (owner IS NULL OR length(btrim(owner)) > 0)", name="business_project_text"),
     )
 
 
@@ -36,14 +36,14 @@ class BusinessRoom(Base):
     project_id = Column(String(36), ForeignKey("business_projects.project_id", ondelete="RESTRICT"), nullable=False)
     code = Column(String(64), nullable=False)
     name = Column(String(128), nullable=False)
-    location = Column(String(256), nullable=False)
+    location = Column(String(256), nullable=True)
     mode = Column(String(16), nullable=False, default="centralized")
     enabled = Column(Boolean, nullable=False, default=True)
     __table_args__ = (
         UniqueConstraint("project_id", "code", name="business_room_project_code"),
         UniqueConstraint("room_id", "project_id", name="business_room_project_pair"),
         CheckConstraint("mode IN ('centralized', 'remote')", name="business_room_mode"),
-        CheckConstraint("length(btrim(code)) > 0 AND length(btrim(name)) > 0 AND length(btrim(location)) > 0", name="business_room_text"),
+        CheckConstraint("length(btrim(code)) > 0 AND length(btrim(name)) > 0 AND (location IS NULL OR length(btrim(location)) > 0)", name="business_room_text"),
     )
 
 

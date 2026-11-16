@@ -12,6 +12,7 @@ interface ZoneEditorProps {
   config: ZoneConfig | null
   onSaved?: (config: ZoneConfig) => void
   seats?: RegistrySeat[]
+  saveOverride?: (draft: ZoneConfigWrite) => Promise<ZoneConfig>
 }
 
 type DrawingMode = 'seat' | 'restricted' | 'entry'
@@ -23,7 +24,7 @@ const initialConfig = (config: ZoneConfig | null): ZoneConfigWrite => ({
 const errorText = (error: unknown) => error instanceof Error ? error.message : '区域配置操作失败，请重试'
 const identifier = () => globalThis.crypto?.randomUUID?.() || `zone-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 
-export default function ZoneEditor({ snapshotUrl, config, onSaved, seats: suppliedSeats }: ZoneEditorProps) {
+export default function ZoneEditor({ snapshotUrl, config, onSaved, seats: suppliedSeats, saveOverride }: ZoneEditorProps) {
   const [draft, setDraft] = useState<ZoneConfigWrite>(() => initialConfig(config))
   const [points, setPoints] = useState<ZonePoint[]>([])
   const [mode, setMode] = useState<DrawingMode>('seat')
@@ -115,6 +116,7 @@ export default function ZoneEditor({ snapshotUrl, config, onSaved, seats: suppli
 
   async function refresh() {
     if (!config || loading || saving) return
+    if (saveOverride) { setDraft(initialConfig(config));setPoints([]);setDirty(false);setNotice('已重置为当前资源草稿');return }
     request.current?.abort()
     const controller = new AbortController()
     request.current = controller
@@ -141,11 +143,11 @@ export default function ZoneEditor({ snapshotUrl, config, onSaved, seats: suppli
     setError('')
     setNotice('')
     try {
-      const result = await saveZoneConfig(config.session_id, config.source_id, draft)
+      const result = saveOverride ? await saveOverride(draft) : await saveZoneConfig(config.session_id, config.source_id, draft)
       setDraft(initialConfig(result))
       setPoints([])
       setDirty(false)
-      setNotice(`区域配置已保存，版本 v${result.config_version}`)
+      setNotice(saveOverride ? '区域已暂存，请保存现场资源版本' : `区域配置已保存，版本 v${result.config_version}`)
       onSaved?.(result)
     } catch (cause) {
       if (cause instanceof ZoneApiError && cause.code === 'VERSION_CONFLICT') setError('配置已被其他操作更新，请刷新后核对再保存')
@@ -155,17 +157,17 @@ export default function ZoneEditor({ snapshotUrl, config, onSaved, seats: suppli
 
   return <section className="zone-editor" aria-label="画面区域标注">
     <header className="zone-editor-heading">
-      <div><span>区域与出入口配置</span><h2>画面区域标注</h2><p>区域按当前视频源保存，坐标使用画面归一化比例。</p></div>
+      <div><span>区域与出入口配置</span><h2>画面区域标注</h2><p>在机位截图上绘制工位、限制区和出入口线。</p></div>
       <div className="zone-editor-actions">
         <Tag>配置 v{draft.config_version}</Tag>
         <Button icon={<ReloadOutlined />} loading={loading} disabled={!config || saving} onClick={() => void refresh()}>刷新</Button>
         <Button type="primary" disabled={!snapshotReady || !config || !dirty || !!points.length || saving || draft.zones.some(zone => zone.kind === 'seat' && !roomSeats.some(seat => seat.seat_id === zone.seat_id))}
-          loading={saving} onClick={() => void save()}>保存区域配置</Button>
+          loading={saving} onClick={() => void save()}>{saveOverride?"暂存区域":'保存区域配置'}</Button>
       </div>
     </header>
     {error && <Alert type="error" showIcon message={error} />}
     {notice && <Alert type="success" showIcon message={notice} />}
-    {!config ? <Empty description="请先选择已绑定评标室和视频源的场次" /> : <div className="zone-editor-grid">
+    {!config ? <Empty description="请先选择评标室和视频机位" /> : <div className="zone-editor-grid">
       <div className="zone-canvas-column">
         <div className="zone-image-frame" data-snapshot-state={snapshotReady ? 'ready' : snapshotUrl ? 'loading' : 'missing'}>
           {snapshotUrl && !snapshotError ? <>
@@ -184,7 +186,7 @@ export default function ZoneEditor({ snapshotUrl, config, onSaved, seats: suppli
               {points.length > 1 && <polyline className="zone-draft-shape" points={points.map(point => point.join(',')).join(' ')} />}
               {points.map((point, index) => <circle className="zone-draft-point" key={`${point[0]}-${point[1]}-${index}`} cx={point[0]} cy={point[1]} r="0.008" />)}
             </svg>
-          </> : <div className="zone-image-empty"><span>{snapshotError ? '快照加载失败' : '未提供画面快照'}</span><small>请先获取此视频源的静态快照，未加载画面时不能保存。</small></div>}
+          </> : <div className="zone-image-empty"><span>{snapshotError ? '快照加载失败' : '未提供画面快照'}</span><small>请先选择此机位的截图，再绘制区域。</small></div>}
         </div>
         <div className="zone-canvas-caption"><span>{snapshotReady ? '静态快照已加载' : '区域保存需先加载静态快照'}</span><span>{config.source_id}</span></div>
         {seatError && <Alert type="warning" showIcon message="工位列表加载失败" description={seatError} />}
@@ -202,20 +204,20 @@ export default function ZoneEditor({ snapshotUrl, config, onSaved, seats: suppli
           onChange={value => setDirection(value as EntryLine['direction'])} /></label>}
         <label className="zone-control-label">名称<Input aria-label="区域或门线名称" maxLength={128} value={name} disabled={!snapshotReady || saving}
           placeholder={mode === 'entry' ? '例如：评标室入口' : '例如：专家工位区域'} onChange={event => setName(event.target.value)} /></label>
-        <p className="zone-tool-hint">{mode === 'entry' ? '在画面点两下确定门线起点和终点。' : '在画面逐点围出区域，至少三个点。'}</p>
+        <p className="zone-tool-hint">{mode === 'entry' ? "点击两点绘制出入口线。" : "依次点击至少 3 个点绘制区域。"}</p>
         <div className="zone-draw-actions">
           <Button icon={<UndoOutlined />} disabled={!points.length || saving} onClick={() => setPoints(current => current.slice(0, -1))}>撤销一点</Button>
           <Button disabled={!points.length || saving} onClick={() => setPoints([])}>清除当前点</Button>
-          <Button type="primary" disabled={!canComplete || saving || !snapshotReady} onClick={completeShape}>{mode === 'entry' ? '完成门线' : '完成区域'}</Button>
+          <Button type="primary" disabled={!canComplete || saving || !snapshotReady} onClick={completeShape}>{mode === 'entry' ? '完成出入口线' : '完成区域'}</Button>
         </div>
-        <div className="zone-list-heading"><b>已标注</b><span>{draft.zones.length}个区域 · {draft.entry_lines.length}条门线</span></div>
+        <div className="zone-list-heading"><b>已标注</b><span>{draft.zones.length}个区域 · {draft.entry_lines.length}条出入口线</span></div>
         <div className="zone-item-list">
           {!draft.zones.length && !draft.entry_lines.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="尚无区域标注" /> : <>
             {draft.zones.map(zone => <div className="zone-item" key={zone.zone_id}><span className={`zone-item-swatch ${zone.kind}`} /><div><b>{zone.name}</b><small>{zone.kind === 'seat' ? roomSeats.find(seat => seat.seat_id === zone.seat_id)?.code || '工位不可用' : '限制区域'}</small></div><Button aria-label={`删除${zone.name}`} type="text" danger icon={<DeleteOutlined />} disabled={saving} onClick={() => removeZone(zone.zone_id)} /></div>)}
             {draft.entry_lines.map(line => <div className="zone-item" key={line.line_id}><span className="zone-item-swatch entry" /><div><b>{line.name}</b><small>出入口线 · {line.direction === 'both' ? '双向' : line.direction === 'in' ? '进入' : '离开'}</small></div><Button aria-label={`删除${line.name}`} type="text" danger icon={<DeleteOutlined />} disabled={saving} onClick={() => removeLine(line.line_id)} /></div>)}
           </>}
         </div>
-        <small className="zone-version-note">保存将生成新配置版本；区域配置仅供检测服务读取，不代表已开始人员越界识别。</small>
+        <small className="zone-version-note">保存后生成新版本，实际识别状态请在运行保障中查看。</small>
       </aside>
     </div>}
   </section>

@@ -57,6 +57,14 @@ weights/*.pth
 *.png
 !assets/*.png
 !services/api/tests/face_fixtures/*.png
+# 仅收录已核验的合成产品预览图
+!/docs/assets/preparation-unified.png
+!/docs/assets/room-resources.png
+!/docs/assets/resource-reuse-archive.png
+!/docs/assets/preparation-regression-replay.png
+!/docs/assets/copy-monitoring.png
+!/docs/assets/copy-archive.png
+!/docs/assets/copy-login.png
 # 现场截图只能存放在受控素材目录；前端使用无个人信息的 SVG 示意图。
 /web-console/public/stage/*.jpg
 /web-console/public/stage/*.jpeg

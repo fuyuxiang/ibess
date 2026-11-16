@@ -20,7 +20,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': { target: process.env.SUPERVISION_API_PROXY_TARGET || 'http://127.0.0.1:8000', changeOrigin: false },
-      '/hls': { target: 'http://localhost:8888', changeOrigin: true, rewrite: path => path.replace(/^\/hls/, '') },
+      '/hls': { target: process.env.SUPERVISION_HLS_PROXY_TARGET || 'http://localhost:8888', changeOrigin: true, rewrite: path => path.replace(/^\/hls/, '') },
     },
   },
 })

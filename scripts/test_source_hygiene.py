@@ -1,5 +1,9 @@
 """验证分发边界和本机配置初始化，完全使用临时目录。"""
 import os
+import json
+import hashlib
+from configure_phase_consumer import configure, scopes_for_session
+from unittest.mock import patch
 from pathlib import Path
 import subprocess
 import tarfile
@@ -17,7 +21,7 @@ class SourceHygieneTests(unittest.TestCase):
             root.mkdir()
             keep = [".env.example", "deploy/linux/.env.example", "deploy/integration/a.env.example",
                     "services/api/app/main.py", "docs/contracts/fixtures/sample.json",
-                    "web-console/src/components/evidence/JointEvidence.tsx",
+                    "web-console/src/components/evidence/EvidencePlayer.tsx",
                     "services/api/tests/face_fixtures/public.jpg", "web-console/public/stage/placeholder.svg"]
             private = [".env", ".env.production", "deploy/a.env", "config/dev.local",
                        "certs/client.key", "certs/client.pem", "certs/client.p12", "id_ed25519",
@@ -53,9 +57,48 @@ class SourceHygieneTests(unittest.TestCase):
             self.assertEqual(len(set(secrets)), 3)
             self.assertTrue(all(len(v) >= 40 for v in secrets))
             self.assertEqual(env.stat().st_mode & 0o777, 0o600)
+            local=root/'config/phase-consumers.local'
+            mapping=json.loads(local.read_text())['event-service']
+            self.assertEqual(mapping['token_sha256'],hashlib.sha256(values['PHASE_CONTROL_TOKEN_EVENT_SERVICE'].encode()).hexdigest())
+            self.assertEqual(mapping['scopes'],[])
+            self.assertNotIn(values['PHASE_CONTROL_TOKEN_EVENT_SERVICE'],local.read_text())
+            self.assertEqual(local.stat().st_mode & 0o777,0o600)
             with self.assertRaises(FileExistsError):
                 initialize(root)
             self.assertEqual(env.read_text(), text)
+
+    def test_consumer_configuration_keeps_exact_scopes_and_does_not_evaluate_env(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            from uuid import uuid4
+            root=Path(tmp);token='A'*43
+            (root/'.env').write_text('PHASE_CONTROL_TOKEN_EVENT_SERVICE='+token+'\nIGNORE=$(touch injected)\n')
+            scope={key:str(uuid4()) for key in ('project_id','room_id','session_id')}
+            scope['source_id']='camera-001'
+            path=configure(root,scope);configure(root,scope)
+            self.assertEqual(json.loads(path.read_text())['event-service']['scopes'],[scope])
+            before=path.read_text()
+            with self.assertRaises(ValueError):configure(root,{**scope,'source_id':'*'})
+            self.assertEqual(path.read_text(),before)
+            self.assertFalse((root/'injected').exists())
+
+    def test_consumer_deployment_reads_all_channels_without_shell_or_wildcards(self):
+        from uuid import uuid4
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);sid=str(uuid4())
+            (root/'.env').write_text('PHASE_CONTROL_TOKEN_EVENT_SERVICE='+'A'*43)
+            scopes=[dict(project_id=str(uuid4()),room_id=str(uuid4()),session_id=sid,source_id=source) for source in ('camera-001','audio-001')]
+            with patch('configure_phase_consumer.subprocess.run',return_value=SimpleNamespace(stdout=json.dumps(scopes))) as run:
+                result=scopes_for_session(root,sid)
+            self.assertEqual(run.call_args.args[0][-1],sid)
+            self.assertNotIn('shell',run.call_args.kwargs)
+            configure(root,result)
+            path=root/'config/phase-consumers.local';before=path.read_text()
+            self.assertEqual(json.loads(before)['event-service']['scopes'],scopes)
+            with self.assertRaises(ValueError):configure(root,[scopes[0],{**scopes[1],'source_id':'*'}])
+            self.assertEqual(path.read_text(),before)
+            with patch('configure_phase_consumer.subprocess.run',return_value=SimpleNamespace(stdout=json.dumps([{**scopes[0],'session_id':str(uuid4())}]))):
+                with self.assertRaises(ValueError):scopes_for_session(root,sid)
 
     def test_shell_loader_preserves_environment_and_treats_values_as_data(self):
         loader = Path(__file__).with_name("load-env.sh").resolve()

@@ -21,8 +21,8 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       // 局部模式：卡内提示，保留页面高度与滚动位置（避免整页塌陷导致滚动归零）
       return <div style={{ minHeight: this.props.inline ? 200 : undefined, padding: this.props.inline ? 16 : 0 }}>
-        <Result status="warning" title={this.props.inline ? '该模块渲染出错' : '页面渲染出错'}
-          subTitle={<span style={{ color: '#7891ac' }}>{this.state.error.message}</span>}
+        <Result status="warning" title={this.props.inline ? "此区域暂不可用" : "页面暂不可用"}
+          subTitle={<span style={{ color: '#7891ac' }}>请刷新页面重试；仍无法使用时，请联系管理员。</span>}
           extra={<Button type="primary" onClick={() => { this.setState({ error: null }); if (!this.props.inline) window.location.reload() }}>重试</Button>} />
       </div>
     }

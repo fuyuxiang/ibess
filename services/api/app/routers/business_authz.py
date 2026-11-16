@@ -5,18 +5,16 @@ leave_permit不影响在场、clarification仅记录），按 6.2 核验关联�
 叠加人工授权覆盖（grants），生成房间时点快照；同房间旧 active 快照自动置为 superseded。
 消费：GET latest 返回语义研判 trusted context 所需字段（speaker_bindings/接收授权/保密依据）。
 """
-from datetime import datetime, timezone
+from datetime import timezone
 from typing import Annotated, Literal
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, StringConstraints
 from sqlalchemy.orm import Session, joinedload
 
 from app.business_authz_models import BusinessAuthorizationEntry, BusinessAuthorizationSnapshot
-from app.business_fact_link_models import BusinessFactVerification
-from app.business_facts_models import BusinessAttendanceFact
-from app.business_models import BusinessParticipant, BusinessPerson, BusinessRoom
+
 from app.db import get_session
 
 router = APIRouter()
@@ -67,71 +65,14 @@ def _serialize(snapshot: BusinessAuthorizationSnapshot) -> dict:
     }
 
 
-def _supersede(session, room_id: str):
-    session.query(BusinessAuthorizationSnapshot).filter(
-        BusinessAuthorizationSnapshot.room_id == room_id,
-        BusinessAuthorizationSnapshot.status == "active").update({"status": "superseded"}, synchronize_session=False)
-
 
 @router.post("/authz/snapshots", status_code=201)
 def create_snapshot(body: SnapshotIn, request: Request, session: Session = Depends(get_session)):
-    actor = _actor(request)
-    room = session.get(BusinessRoom, str(body.room_id))
-    if room is None:
-        raise HTTPException(422, "评标室不存在")
-    if str(room.project_id) != str(body.project_id):
-        raise HTTPException(422, "快照所属项目与评标室不一致")
-    if body.information_visibility == "confidential" and not body.confidentiality_policy_id:
-        raise HTTPException(422, "保密信息级别必须提供保密依据编号（confidentiality_policy_id）")
-    grant_map = {}
-    for grant in body.grants:
-        person_id = str(grant.person_id)
-        if not session.query(BusinessParticipant).filter_by(project_id=str(body.project_id), person_id=person_id).first():
-            raise HTTPException(422, "授权覆盖的人员必须先加入所属项目")
-        grant_map[person_id] = grant.recipient_authorized
-    facts = (session.query(BusinessAttendanceFact)
-             .filter(BusinessAttendanceFact.room_id == str(body.room_id))
-             .order_by(BusinessAttendanceFact.occurred_at.asc(), BusinessAttendanceFact.fact_id).all())
-    presence: dict[str, dict] = {}
-    for fact in facts:
-        if fact.fact_type == "check_in" and fact.person_id:
-            presence[fact.person_id] = {"present": True, "seat_id": fact.seat_id, "fact_id": fact.fact_id}
-        elif fact.fact_type == "change" and fact.person_id and fact.payload:
-            replaced = fact.payload.get("replaced_person_id")
-            if replaced:
-                presence.pop(replaced, None)
-            presence[fact.person_id] = {"present": True, "seat_id": fact.seat_id, "fact_id": fact.fact_id}
-        elif fact.fact_type == "check_out" and fact.person_id:
-            presence.pop(fact.person_id, None)
-    links = {row.fact_id: row for row in
-             session.query(BusinessFactVerification)
-             .options(joinedload(BusinessFactVerification.result))
-             .filter(BusinessFactVerification.fact_id.in_([item["fact_id"] for item in presence.values()])).all()}
-    _supersede(session, str(body.room_id))
-    now = datetime.now(timezone.utc)
-    snapshot = BusinessAuthorizationSnapshot(
-        snapshot_id=str(uuid4()), project_id=str(body.project_id), room_id=str(body.room_id),
-        phase_id=body.phase_id, information_visibility=body.information_visibility,
-        confidentiality_policy_id=body.confidentiality_policy_id, status="active",
-        created_by=actor, created_at=now)
-    session.add(snapshot)
-    session.flush()
-    for person_id, info in presence.items():
-        participant = session.query(BusinessParticipant).filter_by(project_id=str(body.project_id), person_id=person_id).first()
-        if participant is None:
-            continue
-        person = session.get(BusinessPerson, person_id)
-        link = links.get(info["fact_id"])
-        verified = bool(link and link.result and link.result.status == "matched")
-        session.add(BusinessAuthorizationEntry(
-            entry_id=str(uuid4()), snapshot_id=snapshot.snapshot_id, person_id=person_id,
-            seat_id=info["seat_id"], role=participant.role, identity_verified=verified,
-            verification_result_id=link.result_id if verified else None,
-            basis_fact_id=info["fact_id"], recipient_authorized=grant_map.get(person_id, False),
-            grant_fact_id=None))
-    session.add(snapshot)
-    session.commit()
-    session.refresh(snapshot)
+    from app.application.authorization_roster import save_authorization
+    snapshot = save_authorization(session, project_id=str(body.project_id), room_id=str(body.room_id),
+        actor=_actor(request), phase_id=body.phase_id, information_visibility=body.information_visibility,
+        confidentiality_policy_id=body.confidentiality_policy_id,
+        grants={str(grant.person_id): grant.recipient_authorized for grant in body.grants})
     return _serialize(snapshot)
 
 
